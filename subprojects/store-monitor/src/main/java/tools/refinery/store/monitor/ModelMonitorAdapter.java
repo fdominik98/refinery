@@ -2,6 +2,7 @@ package tools.refinery.store.monitor;
 
 import tools.refinery.store.adapter.ModelAdapter;
 import tools.refinery.store.monitor.internal.ModelMonitorBuilderImpl;
+import tools.refinery.store.monitor.internal.model.StateMachineSummary;
 import tools.refinery.store.monitor.internal.model.SymbolHolder;
 
 public interface ModelMonitorAdapter extends ModelAdapter {
@@ -10,4 +11,6 @@ public interface ModelMonitorAdapter extends ModelAdapter {
 	}
 
 	SymbolHolder getSymbols();
+
+	StateMachineSummary getSummary();
 }

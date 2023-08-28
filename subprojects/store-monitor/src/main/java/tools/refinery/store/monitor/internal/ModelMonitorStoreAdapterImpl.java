@@ -5,6 +5,7 @@ import tools.refinery.store.model.Model;
 import tools.refinery.store.model.ModelStore;
 import tools.refinery.store.monitor.AbstractTimeProvider;
 import tools.refinery.store.monitor.ModelMonitorStoreAdapter;
+import tools.refinery.store.monitor.internal.model.StateMachineSummary;
 import tools.refinery.store.monitor.internal.model.SymbolHolder;
 
 import java.util.Collection;
@@ -18,12 +19,16 @@ public class ModelMonitorStoreAdapterImpl implements ModelMonitorStoreAdapter {
 	private final SymbolHolder symbolHolder;
 	private final AbstractTimeProvider timeProvider;
 
+	private final StateMachineSummary summary;
+
 	ModelMonitorStoreAdapterImpl(ModelStore store, AbstractTimeProvider timeProvider,
-								 List<BiConsumer<Model, Integer>> actionSet, SymbolHolder symbolHolder) {
+								 List<BiConsumer<Model, Integer>> actionSet, SymbolHolder symbolHolder,
+								 StateMachineSummary summary) {
 		this.store = store;
 		this.actionSet = actionSet;
 		this.symbolHolder = symbolHolder;
 		this.timeProvider = timeProvider;
+		this.summary = summary;
 	}
 	@Override
 	public ModelStore getStore() {
@@ -37,6 +42,6 @@ public class ModelMonitorStoreAdapterImpl implements ModelMonitorStoreAdapter {
 
 	@Override
 	public ModelAdapter createModelAdapter(Model model) {
-		return new ModelMonitorAdapterImpl(model, this, timeProvider, symbolHolder);
+		return new ModelMonitorAdapterImpl(model, this, timeProvider, symbolHolder, summary);
 	}
 }

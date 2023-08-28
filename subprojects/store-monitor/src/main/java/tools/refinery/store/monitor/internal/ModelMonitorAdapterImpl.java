@@ -6,6 +6,7 @@ import tools.refinery.store.model.ModelListener;
 import tools.refinery.store.monitor.AbstractTimeProvider;
 import tools.refinery.store.monitor.ModelMonitorAdapter;
 import tools.refinery.store.monitor.TimeListener;
+import tools.refinery.store.monitor.internal.model.StateMachineSummary;
 import tools.refinery.store.monitor.internal.model.SymbolHolder;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.tuple.Tuple;
@@ -17,14 +18,16 @@ public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListen
 
 	private final AbstractTimeProvider timeProvider;
 	private final SymbolHolder symbolHolder;
+	private final StateMachineSummary summary;
 
 	ModelMonitorAdapterImpl(Model model, ModelMonitorStoreAdapterImpl storeAdapter,
 							AbstractTimeProvider timeProvider,
-							SymbolHolder symbolHolder) {
+							SymbolHolder symbolHolder, StateMachineSummary summary) {
 		this.model = model;
 		this.storeAdapter = storeAdapter;
 		this.timeProvider = timeProvider;
 		this.symbolHolder = symbolHolder;
+		this.summary = summary;
 
 		var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 		var stateInterpretation = model.getInterpretation(symbolHolder.getStartSymbols().symbol);
@@ -63,4 +66,11 @@ public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListen
 	public SymbolHolder getSymbols() {
 		return symbolHolder;
 	}
+
+	@Override
+	public StateMachineSummary getSummary() {
+		return summary;
+	}
+
+
 }

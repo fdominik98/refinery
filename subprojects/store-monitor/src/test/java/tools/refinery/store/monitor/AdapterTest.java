@@ -30,8 +30,8 @@ class AdapterTest {
 		var s2 = sm.createState();
 		var s3 = sm.createState();
 
-		PartialModelGuard guard1 = new PartialModelGuard(hasBehind.name(), List.of(c1, c2));
-		PartialModelGuard guard2 = new PartialModelGuard(actor.name(), List.of(a1));
+		PartialModelGuard guard1 = new PartialModelGuard(hasBehind, List.of(c1, c2));
+		PartialModelGuard guard2 = new PartialModelGuard(actor, List.of(a1));
 		TimeGreaterThanGuard greaterThan4Guard = new TimeGreaterThanGuard(4);
 		TimeLessThanGuard lessThan2Guard = new TimeLessThanGuard(2);
 
@@ -42,11 +42,10 @@ class AdapterTest {
 		TimeProviderMock timeProvider = new TimeProviderMock();
 
 		var store = ModelStore.builder()
-				.symbols()
+				.symbols(hasBehind, actor)
 				.with(ViatraModelQueryAdapter.builder())
 				.with(ModelMonitorAdapter.builder()
 						.monitor(sm)
-						.relations(actor, hasBehind)
 						.timeProvider(timeProvider)
 						.withStateQueries())
 				.build();

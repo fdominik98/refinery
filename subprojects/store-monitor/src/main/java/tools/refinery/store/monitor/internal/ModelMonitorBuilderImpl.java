@@ -28,31 +28,22 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 		implements ModelMonitorBuilder{
 
 	private StateMachine monitor;
-	private Set<Symbol<Boolean>> relations = Set.of();
 	private final List<BiConsumer<Model, Integer>> actionSet = new ArrayList<>();
 	private final Set<RelationalQuery> querySet = new HashSet<>();
 	private SymbolHolder symbolHolder;
 	private final Symbol<Integer> clockSymbol = Symbol.of("Clock", 0, Integer.class);
 	private AbstractTimeProvider timeProvider;
+	private StateMachineSummary summary = new StateMachineSummary();
 
-	private Symbol<?> getRelationSymbol(tools.refinery.store.monitor.internal.model.PartialModelGuard guard){
-		for (Symbol<?> symbol : relations) {
-			if (symbol.name().equals(guard.relation)){
-				return symbol;
-			}
-		}
-		throw new IllegalArgumentException(
-				"Incorrect relation name in guard: %s is not in the model"
-				.formatted(guard.relation));
-	}
 
 	@Override
 	protected ModelMonitorStoreAdapterImpl doBuild(ModelStore store) {
-		return new ModelMonitorStoreAdapterImpl(store, timeProvider, actionSet, symbolHolder);
+		return new ModelMonitorStoreAdapterImpl(store, timeProvider, actionSet, symbolHolder, summary);
 	}
 
 	@Override
 	public ModelMonitorBuilder monitor(StateMachine monitor) {
+		checkNotConfigured();
 		this.monitor = monitor;
 		StateMachineTraversal traverser = new StateMachineTraversal(monitor.startState);
 		this.symbolHolder = traverser.symbolHolder;
@@ -60,25 +51,15 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 	}
 
 	@Override
-	public ModelMonitorBuilder relations(Symbol<Boolean>... relations) {
-		this.relations = Set.of(relations);
-		return this;
-	}
-
-	@Override
-	public ModelMonitorBuilder relations(Collection<Symbol<Boolean>> relations) {
-		this.relations = new HashSet<>(relations);
-		return this;
-	}
-
-	@Override
 	public ModelMonitorBuilder timeProvider(AbstractTimeProvider timeProvider) {
+		checkNotConfigured();
 		this.timeProvider = timeProvider;
 		return this;
 	}
 
 	@Override
 	public ModelMonitorBuilder withStateQueries() {
+		checkNotConfigured();
 		querySet.addAll(symbolHolder.queryList);
 		return this;
 	}
@@ -121,8 +102,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 								}
 								guardVariables.add(variableMap.get(p));
 							}
-							var symbol = this.getRelationSymbol(pmg);
-							var view = new KeyOnlyView<>(symbol);
+							var view = new KeyOnlyView<>(pmg.relation);
 							if (pmg.negated){
 								literals.add(view.call(CallPolarity.NEGATIVE, guardVariables));
 							}
@@ -171,6 +151,17 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 						Tuple fromTuple = Tuple.of(fromTupleArray);
 						fromStateInterpretation.put(fromTuple, null);
 						toStateInterpretation.put(res, now);
+
+						switch(t.to.type){
+							case TRAP -> summary.trapStateCount++;
+							case ACCEPT -> summary.acceptStateCount++;
+							default -> summary.intermediateStateCount++;
+						}
+						switch(t.from.type){
+							case TRAP -> summary.trapStateCount--;
+							case ACCEPT -> summary.acceptStateCount--;
+							default -> summary.intermediateStateCount--;
+						}
 					}
 				};
 				actionSet.add(action);
@@ -185,7 +176,6 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 
 		storeBuilder.symbols(symbolHolder.symbolList);
 		storeBuilder.symbols(clockSymbol);
-		storeBuilder.symbols(relations);
 
 		var queryBuilder = storeBuilder.getAdapter(ModelQueryBuilder.class);
 		queryBuilder.queries(querySet);

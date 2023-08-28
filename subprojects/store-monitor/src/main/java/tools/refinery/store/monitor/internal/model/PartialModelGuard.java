@@ -1,24 +1,25 @@
 package tools.refinery.store.monitor.internal.model;
 
+import tools.refinery.store.representation.Symbol;
 import java.util.List;
 import java.util.Objects;
 
 public class PartialModelGuard extends Guard {
 
-	public final String relation;
+	public final Symbol<Boolean> relation;
 	public final boolean negated;
 
 	public PartialModelGuard neg() {
 		return new PartialModelGuard(relation, parameters, true);
 	}
 
-	public PartialModelGuard(String relation, List<Parameter> parameters) {
+	public PartialModelGuard(Symbol<Boolean> relation, List<Parameter> parameters) {
 		super(parameters);
 		this.relation = relation;
 		this.negated = false;
 	}
 
-	public PartialModelGuard(String relation, List<Parameter> parameters, boolean negated) {
+	public PartialModelGuard(Symbol<Boolean> relation, List<Parameter> parameters, boolean negated) {
 		super(parameters);
 		this.relation = relation;
 		this.negated = negated;

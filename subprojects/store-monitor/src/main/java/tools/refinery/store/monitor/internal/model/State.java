@@ -8,7 +8,6 @@ public class State {
 	public enum Type {
 		START,
 		INTERMEDIATE,
-		FINAL,
 		TRAP,
 		ACCEPT
 	}
@@ -26,9 +25,6 @@ public class State {
 
 	public boolean isStart() {
 		return type == Type.START;
-	}
-	public boolean isFinal() {
-		return type == Type.FINAL;
 	}
 	public boolean isTrap() {
 		return type == Type.TRAP;

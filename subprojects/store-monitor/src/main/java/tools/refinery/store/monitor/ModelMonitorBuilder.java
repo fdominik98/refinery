@@ -9,10 +9,6 @@ public interface ModelMonitorBuilder extends ModelAdapterBuilder {
 
 	ModelMonitorBuilder monitor(StateMachine monitor);
 
-	ModelMonitorBuilder relations(Symbol<Boolean>... relations);
-
-	ModelMonitorBuilder relations(Collection<Symbol<Boolean>> relations);
-
 	ModelMonitorBuilder timeProvider(AbstractTimeProvider timeProvider);
 
 	ModelMonitorBuilder withStateQueries();
