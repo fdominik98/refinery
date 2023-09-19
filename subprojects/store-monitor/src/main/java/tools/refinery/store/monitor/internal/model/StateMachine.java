@@ -7,13 +7,13 @@ public class StateMachine {
 	public final Set<Transition> transitions;
 	public final Set<State> states;
 	public final State startState;
-	public final Set<Parameter> parameters;
+	public final ClockHolder clockHolder;
 
 	public StateMachine() {
 		this.transitions = new HashSet<>();
 		this.states = new HashSet<>();
 		this.startState = this.createState(State.Type.START);
-		this.parameters = new HashSet<>();
+		this.clockHolder = new ClockHolder();
 	}
 
 	public State createState(State.Type type) {
@@ -26,12 +26,19 @@ public class StateMachine {
 		return createState(State.Type.INTERMEDIATE);
 	}
 
-	public Transition createTransition(State from, List<Guard> guardTriggers, State to) {
-		return createTransitionImpl(from, guardTriggers, to);
+	public Transition createTransition(State from, Guard guard, State to, ClockResetAction action) {
+		for (Clock c : action.clocksToReset) {
+			clockHolder.put(c, 0);
+		}
+		return createTransitionImpl(from, guard, to, action);
 	}
 
-	public Transition createTransitionImpl(State from, List<Guard> guardTriggers, State to) {
-		Transition t = new Transition(from, guardTriggers, to);
+	public Transition createTransition(State from, Guard guard, State to) {
+		return createTransitionImpl(from, guard, to, new ClockResetAction());
+	}
+
+	public Transition createTransitionImpl(State from, Guard guard, State to, ClockResetAction action) {
+		Transition t = new Transition(from, guard, to, action);
 		from.addOutTransition(t);
 		to.addInTransition(t);
 		this.transitions.add(t);

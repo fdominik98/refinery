@@ -7,7 +7,6 @@ import tools.refinery.store.monitor.AbstractTimeProvider;
 import tools.refinery.store.monitor.ModelMonitorStoreAdapter;
 import tools.refinery.store.monitor.internal.model.StateMachineSummary;
 import tools.refinery.store.monitor.internal.model.SymbolHolder;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;

@@ -12,11 +12,11 @@ import java.util.List;
 
 public class StateSymbol {
 
-	public final Symbol<Integer> symbol;
+	public final Symbol<ClockHolder> symbol;
 
 	private final RelationalQuery query;
 
-	public StateSymbol(Symbol<Integer> symbol) {
+	public StateSymbol(Symbol<ClockHolder> symbol) {
 		this.symbol = symbol;
 
 		this.query = Query.of(symbol.name() + "_query", builder -> {

@@ -15,7 +15,6 @@ public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListen
 
 	private final Model model;
 	private final ModelMonitorStoreAdapterImpl storeAdapter;
-
 	private final AbstractTimeProvider timeProvider;
 	private final SymbolHolder symbolHolder;
 	private final StateMachineSummary summary;
@@ -25,17 +24,18 @@ public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListen
 							SymbolHolder symbolHolder, StateMachineSummary summary) {
 		this.model = model;
 		this.storeAdapter = storeAdapter;
-		this.timeProvider = timeProvider;
+		this.timeProvider = timeProvider != null ? timeProvider : new TimeProviderMock();
 		this.symbolHolder = symbolHolder;
 		this.summary = summary;
 
-		var queryEngine = model.getAdapter(ModelQueryAdapter.class);
-		var stateInterpretation = model.getInterpretation(symbolHolder.getStartSymbols().symbol);
-		stateInterpretation.put(Tuple.of(), timeProvider.getTime());
+		var queryEngine = this.model.getAdapter(ModelQueryAdapter.class);
+		var stateInterpretation = this.model.getInterpretation(this.symbolHolder.getStartSymbols().symbol);
+		this.symbolHolder.clockHolder.reset(this.timeProvider.getTime());
+		stateInterpretation.put(Tuple.of(), this.symbolHolder.clockHolder);
 		queryEngine.flushChanges();
 
-		model.addListener(this);
-		timeProvider.addListener(this);
+		this.model.addListener(this);
+		this.timeProvider.addListener(this);
 	}
 
 	@Override

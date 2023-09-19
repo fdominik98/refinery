@@ -3,25 +3,30 @@ package tools.refinery.store.monitor.utils;
 import tools.refinery.store.dse.ActionFactory;
 import tools.refinery.store.dse.internal.TransformationRule;
 import tools.refinery.store.model.Interpretation;
-import tools.refinery.store.model.Model;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.dnf.RelationalQuery;
-import tools.refinery.store.query.literal.Literals;
+import tools.refinery.store.query.literal.Literal;
+import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.query.view.AnySymbolView;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import static tools.refinery.store.query.term.int_.IntTerms.*;
-
-public class TrafficSituationMetaModel {
-
-	private int GRID_ROWS = 14;
-	private int GRID_COLUMNS = 4;
-
+public final class TrafficSituationMetaModel {
+	public Symbol cellSymbol = Symbol.of("Cell", 1);
+	public AnySymbolView cellView = new KeyOnlyView<>(cellSymbol);
+	public Symbol southOfSymbol = Symbol.of("SouthOf", 2);
+	public AnySymbolView southOfView = new KeyOnlyView<>(southOfSymbol);
+	public Symbol northOfSymbol = Symbol.of("NorthOf", 2);
+	public AnySymbolView northOfView = new KeyOnlyView<>(northOfSymbol);
+	public Symbol westOfSymbol = Symbol.of("WestOf", 2);
+	public AnySymbolView westOfView = new KeyOnlyView<>(westOfSymbol);
+	public Symbol eastOfSymbol = Symbol.of("EastOf", 2);
+	public AnySymbolView eastOfView = new KeyOnlyView<>(eastOfSymbol);
+	public Symbol onCellSymbol = Symbol.of("OnCell", 2);
+	public AnySymbolView onCellView = new KeyOnlyView<>(onCellSymbol);
 	public Symbol laneSymbol = Symbol.of("Lane", 1);
 	public AnySymbolView laneView = new KeyOnlyView<>(laneSymbol);
 	public Symbol actorSymbol = Symbol.of("Actor", 1);
@@ -31,92 +36,102 @@ public class TrafficSituationMetaModel {
 	public Interpretation<Boolean> carInterpretation;
 	public Symbol pedestrianSymbol = Symbol.of("Pedestrian", 1);
 	public AnySymbolView pedestrianView = new KeyOnlyView<>(pedestrianSymbol);
-	public Symbol<Boolean> grid[][] = new Symbol[GRID_ROWS][GRID_COLUMNS];
-	public AnySymbolView gridView[][] = new KeyOnlyView[GRID_ROWS][GRID_COLUMNS];
-	public List<RelationalQuery> movePreconditions = new ArrayList<>(GRID_COLUMNS*GRID_ROWS);
-	public List<TransformationRule> transformationRules = new ArrayList<>(GRID_COLUMNS*GRID_ROWS);
+	public List<RelationalQuery> queries = new ArrayList<>();
+	public List<TransformationRule> transformationRules = new ArrayList<>();
 
 	public TrafficSituationMetaModel(){
-		for (int i = 0; i < grid.length; i++) {
-			for (int j = 0; j < grid[i].length; j++) {
-				grid[i][j] = Symbol.of("grid_" + i + "_" + j, 1);
-				gridView[i][j] = new KeyOnlyView<>(grid[i][j]);
-				transformationRules.addAll(createGridMoveTrafoRules(i, j));
-				createGridMoveTrafoRules(i, j);
+
+		RelationalQuery neighborhoodPrecondition = Query.of("neighborhoodPrecondition",
+				(builder, c1, c2) -> builder
+						.clause(southOfView.call(c1, c2))
+						.clause(eastOfView.call(c1, c2))
+						.clause(westOfView.call(c1, c2))
+						.clause(northOfView.call(c1, c2))
+		);
+		RelationalQuery movePrecondition = Query.of("movePrecondition",
+				(builder, c1, c2, a1) -> builder.clause(
+						actorView.call(a1),
+						cellView.call(c1),
+						onCellView.call(a1, c1),
+						cellView.call(c2),
+						neighborhoodPrecondition.call(c1, c2)
+				)
+		);
+		queries.add(movePrecondition);
+
+		ActionFactory actionFactory = (model) -> {
+			var onCellInterpretation = model.getInterpretation(onCellSymbol);
+			return ((Tuple activation) -> {
+				onCellInterpretation.put(Tuple.of(activation.get(0), activation.get(2)), false);
+				onCellInterpretation.put(Tuple.of(activation.get(1), activation.get(2)), true);
+			});
+		};
+		transformationRules.add(new TransformationRule("MoveToNeighborRule", movePrecondition, actionFactory));
+	}
+
+	private final RelationalQuery placedOnCells = Query.of((builder, actor1, cell1, actor2, cell2) -> {
+		builder.clause(
+				actorView.call(actor1),
+				cellView.call(cell1),
+				onCellView.call(actor1, cell1),
+				actorView.call(actor2),
+				cellView.call(cell2),
+				onCellView.call(actor2, cell2)
+		);
+	});
+
+	public RelationalQuery isInDirection(NodeVariable actor1, NodeVariable actor2, int x, int y) {
+		return Query.of(builder -> {
+			var cell1 = NodeVariable.of();
+			var cell2 = NodeVariable.of();
+			builder.parameters(actor1, actor2);
+			List<Literal> literals = new ArrayList<>();
+			literals.add(placedOnCells.call(actor1, cell1, actor2, cell2));
+
+			if(x == 0 && y == 0) {
+				literals.add(cell1.isEquivalent(cell2));
 			}
-		}
-	}
+			else {
+				NodeVariable tempCell1 = cell1;
+				NodeVariable tempCell2 = null;
+				// For X direction
+				if (x > 0) {
+					for (int i = 0; i < x - 1; i++) {
+						tempCell2 = NodeVariable.of();
+						literals.add(westOfView.call(tempCell1, tempCell2));
+						tempCell1 = tempCell2;
+					}
+					tempCell2 = (y == 0) ? cell2 : NodeVariable.of();
+					literals.add(westOfView.call(tempCell1, tempCell2));
+				} else if (x < 0) {
+					for (int i = 0; i < -x - 1; i++) {
+						tempCell2 = NodeVariable.of();
+						literals.add(eastOfView.call(tempCell1, tempCell2));
+						tempCell1 = tempCell2;
+					}
+					tempCell2 = (y == 0) ? cell2 : NodeVariable.of();
+					literals.add(eastOfView.call(tempCell1, tempCell2));
+				}
 
-	List<TransformationRule> createGridMoveTrafoRules(int i, int j) {
-		List<TransformationRule> rules = new ArrayList<>(8);
-		RelationalQuery precondition = Query.of("GridMovePrecondition_" + i + "_" + j,
-				(builder, model) -> builder.clause(
-						actorView.call(model),
-						gridView[i][j].call(model)
-				));
-		movePreconditions.add(precondition);
-
-		if(i < GRID_ROWS - 1){
-			rules.add(createGridMoveTrafoRuleNorth(precondition, i, j));
-		}
-		if(i > 0) {
-			rules.add(createGridMoveTrafoRuleSouth(precondition, i, j));
-		}
-		if(j < GRID_COLUMNS - 1){
-			rules.add(createGridMoveTrafoRuleEast(precondition, i, j));
-		}
-		if(j > 0) {
-			rules.add(createGridMoveTrafoRuleWest(precondition, i, j));
-		}
-		return rules;
-	}
-
-
-	TransformationRule createGridMoveTrafoRuleEast(RelationalQuery precondition, int i, int j) {
-		ActionFactory actionFactory = (model) -> {
-			var fromCellInterpretation = model.getInterpretation(grid[i][j]);
-			var toCellInterpretation = model.getInterpretation(grid[i][j + 1]);
-			return ((Tuple activation) -> {
-				fromCellInterpretation.put(activation, false);
-				toCellInterpretation.put(activation, true);
-			});
-		};
-		return new TransformationRule("Move_" + i + "_" + j + "_east_rule", precondition, actionFactory);
-	}
-
-	TransformationRule createGridMoveTrafoRuleWest(RelationalQuery precondition, int i, int j) {
-		ActionFactory actionFactory = (model) -> {
-			var fromCellInterpretation = model.getInterpretation(grid[i][j]);
-			var toCellInterpretation = model.getInterpretation(grid[i][j - 1]);
-			return ((Tuple activation) -> {
-				fromCellInterpretation.put(activation, false);
-				toCellInterpretation.put(activation, true);
-			});
-		};
-		return new TransformationRule("Move_" + i + "_" + j + "_west_rule", precondition, actionFactory);
-	}
-
-	TransformationRule createGridMoveTrafoRuleNorth(RelationalQuery precondition, int i, int j) {
-		ActionFactory actionFactory = (model) -> {
-			var fromCellInterpretation = model.getInterpretation(grid[i][j]);
-			var toCellInterpretation = model.getInterpretation(grid[i + 1][j]);
-			return ((Tuple activation) -> {
-				fromCellInterpretation.put(activation, false);
-				toCellInterpretation.put(activation, true);
-			});
-		};
-		return new TransformationRule("Move_" + i + "_" + j + "_north_rule", precondition, actionFactory);
-	}
-
-	TransformationRule createGridMoveTrafoRuleSouth(RelationalQuery precondition, int i, int j) {
-		ActionFactory actionFactory = (model) -> {
-			var fromCellInterpretation = model.getInterpretation(grid[i][j]);
-			var toCellInterpretation = model.getInterpretation(grid[i - 1][j]);
-			return ((Tuple activation) -> {
-				fromCellInterpretation.put(activation, false);
-				toCellInterpretation.put(activation, true);
-			});
-		};
-		return new TransformationRule("Move_" + i + "_" + j + "_south_rule", precondition, actionFactory);
+				tempCell1 = tempCell2;
+				// For Y direction
+				if (y > 0) {
+					for (int i = 0; i < y - 1; i++) {
+						tempCell2 = NodeVariable.of();
+						literals.add(southOfView.call(tempCell1, tempCell2));
+						tempCell1 = tempCell2;
+					}
+					literals.add(southOfView.call(tempCell1, cell2));
+				} else if (y < 0) {
+					for (int i = 0; i < -y - 1; i++) {
+						tempCell2 = NodeVariable.of();
+						literals.add(northOfView.call(tempCell1, tempCell2));
+						tempCell1 = tempCell2;
+					}
+					literals.add(northOfView.call(tempCell1, cell2));
+				}
+			}
+			builder.clause(literals);
+		});
 	}
 }

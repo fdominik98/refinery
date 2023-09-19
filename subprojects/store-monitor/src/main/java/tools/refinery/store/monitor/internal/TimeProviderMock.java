@@ -1,4 +1,8 @@
-package tools.refinery.store.monitor;
+package tools.refinery.store.monitor.internal;
+
+import tools.refinery.store.monitor.AbstractTimeProvider;
+import tools.refinery.store.monitor.TimeListener;
+import tools.refinery.store.representation.Symbol;
 
 public class TimeProviderMock extends AbstractTimeProvider {
 	int time = 0;
@@ -8,7 +12,7 @@ public class TimeProviderMock extends AbstractTimeProvider {
 		}
 	}
 
-	void stepTime(int t){
+	public void stepTime(int t){
 		for(int i = 0; i < t; i++) {
 			stepTime();
 		}

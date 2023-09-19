@@ -8,8 +8,12 @@ package tools.refinery.store.monitor;
 import org.junit.jupiter.api.Test;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.model.ModelStore;
+import tools.refinery.store.monitor.internal.TimeProviderMock;
 import tools.refinery.store.query.ModelQueryAdapter;
+import tools.refinery.store.query.dnf.Query;
+import tools.refinery.store.query.term.Variable;
 import tools.refinery.store.query.viatra.ViatraModelQueryAdapter;
+import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
 import java.util.List;
@@ -18,28 +22,42 @@ import static tools.refinery.store.monitor.utils.QueryAssertions.assertResults;
 
 class AdapterTest {
 	private static final Symbol<Boolean> actor = Symbol.of("Actor", 1);
+	private static final KeyOnlyView actorView = new KeyOnlyView<>(actor);
 	private static final Symbol<Boolean> hasBehind = Symbol.of("HasBehind", 2);
+	private static final KeyOnlyView hasBehindView = new KeyOnlyView<>(hasBehind);
 
 	@Test
 	void TakeOverFromLeft() {
-		Parameter c1 = new Parameter("c1");
-		Parameter c2 = new Parameter("c2");
-		Parameter a1 = new Parameter("a1");
 
 		StateMachine sm = new StateMachine();
 		var s2 = sm.createState();
 		var s3 = sm.createState();
 
-		PartialModelGuard guard1 = new PartialModelGuard(hasBehind, List.of(c1, c2));
-		PartialModelGuard guard2 = new PartialModelGuard(actor, List.of(a1));
-		TimeGreaterThanGuard greaterThan4Guard = new TimeGreaterThanGuard(4);
-		TimeLessThanGuard lessThan2Guard = new TimeLessThanGuard(2);
-
-		sm.createTransition(sm.startState, List.of(guard1, greaterThan4Guard), s2);
-		sm.createTransition(s2, List.of(guard2, lessThan2Guard), sm.startState);
-		sm.createTransition(s2, List.of(lessThan2Guard), s3);
+		var c1 = Variable.of("c1");
+		var c2 = Variable.of("c2");
+		var a1 = Variable.of("a1");
+		Clock clock1 = new Clock("clock1");
 
 		TimeProviderMock timeProvider = new TimeProviderMock();
+
+
+		var guard1 = Guard.of(Query.of(builder -> {
+			builder.parameters(c1, c2);
+			builder.clause(hasBehindView.call(c1, c2));
+		}), new ClockGreaterThanTimeConstraint(clock1, 4));
+
+		var lessThan2Guard = new ClockLessThanTimeConstraint(clock1, 2);
+
+		var guard2 = Guard.of(Query.of(builder -> {
+			builder.parameters(a1);
+			builder.clause(actorView.call(a1));
+		}), lessThan2Guard);
+
+		var guard3 = Guard.of(lessThan2Guard);
+
+		sm.createTransition(sm.startState, guard1, s2, new ClockResetAction(clock1));
+		sm.createTransition(s2, guard2, sm.startState, new ClockResetAction(clock1));
+		sm.createTransition(s2, guard3, s3, new ClockResetAction(clock1));
 
 		var store = ModelStore.builder()
 				.symbols(hasBehind, actor)

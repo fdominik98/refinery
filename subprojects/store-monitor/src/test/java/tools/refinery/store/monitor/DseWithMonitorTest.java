@@ -10,44 +10,40 @@ import tools.refinery.store.dse.DesignSpaceExplorationAdapter;
 import tools.refinery.store.dse.strategy.BestFirstStrategy;
 import tools.refinery.store.dse.strategy.DepthFirstStrategy;
 import tools.refinery.store.model.ModelStore;
+import tools.refinery.store.monitor.utils.SituationInitializer;
+import tools.refinery.store.monitor.utils.TrafficSituationAutomaton;
 import tools.refinery.store.monitor.utils.TrafficSituationMetaModel;
 import tools.refinery.store.query.ModelQueryAdapter;
-import tools.refinery.store.query.dnf.RelationalQuery;
 import tools.refinery.store.query.viatra.ViatraModelQueryAdapter;
-import tools.refinery.store.representation.Symbol;
-
-import java.lang.reflect.Array;
-import java.util.List;
+import tools.refinery.visualization.ModelVisualizerAdapter;
+import tools.refinery.visualization.internal.FileFormat;
 
 class DseWithMonitorTest {
-
-	public static <T> List<T> flattenArray(T[][] twoDArray, Class<T> clazz) {
-		int rows = twoDArray.length;
-		int cols = twoDArray[0].length;
-		T[] oneDArray = (T[]) Array.newInstance(clazz, rows * cols);
-
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				oneDArray[i * cols + j] = twoDArray[i][j];
-			}
-		}
-		return List.of(oneDArray);
-	}
 
 	@Test
 	void TakeOverFromLeft() {
 		var metaModel = new TrafficSituationMetaModel();
-
-		var grid = flattenArray(metaModel.grid, Symbol.class);
+		var monitor = new TrafficSituationAutomaton(metaModel);
 
 		var store = ModelStore.builder()
-				.symbols(metaModel.actorSymbol, metaModel.carSymbol, metaModel.laneSymbol, metaModel.pedestrianSymbol)
-				.symbols(grid)
+				.symbols(metaModel.actorSymbol, metaModel.carSymbol, metaModel.laneSymbol,
+						metaModel.pedestrianSymbol, metaModel.cellSymbol, metaModel.onCellSymbol,
+						metaModel.southOfSymbol, metaModel.northOfSymbol, metaModel.eastOfSymbol,
+						metaModel.westOfSymbol)
 				.with(ViatraModelQueryAdapter.builder()
-						.queries(metaModel.movePreconditions))
+						.queries(metaModel.queries))
+				.with(ModelMonitorAdapter.builder()
+						.monitor(monitor.stateMachine))
+				.with(ModelVisualizerAdapter.builder()
+						.withOutputpath("test_output")
+						.withFormat(FileFormat.SVG)
+						.withFormat(FileFormat.DOT)
+						.saveStates()
+						.saveDesignSpace()
+				)
 				.with(DesignSpaceExplorationAdapter.builder()
 						.transformations(metaModel.transformationRules)
-						.strategy(new BestFirstStrategy().withDepthLimit(0))
+						.strategy(new DepthFirstStrategy().withDepthLimit(3).continueIfHardObjectivesFulfilled())
 				)
 				.build();
 
@@ -55,21 +51,7 @@ class DseWithMonitorTest {
 		var dseAdapter = model.getAdapter(DesignSpaceExplorationAdapter.class);
 		var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 
-		var laneInterpretation = model.getInterpretation(metaModel.laneSymbol);
-		var actorInterpretation = model.getInterpretation(metaModel.actorSymbol);
-		var carInterpretation = model.getInterpretation(metaModel.carSymbol);
-		var pedestrianInterpretation = model.getInterpretation(metaModel.pedestrianSymbol);
-
-		var actor1 = dseAdapter.createObject();
-		var actor2 = dseAdapter.createObject();
-
-		carInterpretation.put(actor1, true);
-		actorInterpretation.put(actor1, true);
-		model.getInterpretation(metaModel.grid[10][1]).put(actor1, true);
-		carInterpretation.put(actor2, true);
-		actorInterpretation.put(actor2, true);
-		model.getInterpretation(metaModel.grid[10][2]).put(actor2, true);
-
+		new SituationInitializer(model, metaModel, 4, 5);
 		queryEngine.flushChanges();
 
 		var states = dseAdapter.explore();
