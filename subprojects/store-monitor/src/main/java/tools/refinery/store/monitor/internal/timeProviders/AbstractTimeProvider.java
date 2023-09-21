@@ -1,5 +1,6 @@
-package tools.refinery.store.monitor;
+package tools.refinery.store.monitor.internal.timeProviders;
 
+import tools.refinery.store.monitor.TimeListener;
 import tools.refinery.store.representation.Symbol;
 import java.util.LinkedList;
 import java.util.Queue;

@@ -3,11 +3,11 @@ package tools.refinery.store.monitor.internal;
 import tools.refinery.store.adapter.ModelStoreAdapter;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.model.ModelListener;
-import tools.refinery.store.monitor.AbstractTimeProvider;
+import tools.refinery.store.monitor.internal.timeProviders.AbstractTimeProvider;
 import tools.refinery.store.monitor.ModelMonitorAdapter;
 import tools.refinery.store.monitor.TimeListener;
-import tools.refinery.store.monitor.internal.model.StateMachineSummary;
-import tools.refinery.store.monitor.internal.model.SymbolHolder;
+import tools.refinery.store.monitor.internal.model.Monitor;
+import tools.refinery.store.monitor.internal.timeProviders.TimeProviderMock;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.tuple.Tuple;
 
@@ -16,22 +16,20 @@ public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListen
 	private final Model model;
 	private final ModelMonitorStoreAdapterImpl storeAdapter;
 	private final AbstractTimeProvider timeProvider;
-	private final SymbolHolder symbolHolder;
-	private final StateMachineSummary summary;
+	private final Monitor monitor;
 
 	ModelMonitorAdapterImpl(Model model, ModelMonitorStoreAdapterImpl storeAdapter,
 							AbstractTimeProvider timeProvider,
-							SymbolHolder symbolHolder, StateMachineSummary summary) {
+							Monitor monitor) {
 		this.model = model;
 		this.storeAdapter = storeAdapter;
 		this.timeProvider = timeProvider != null ? timeProvider : new TimeProviderMock();
-		this.symbolHolder = symbolHolder;
-		this.summary = summary;
+		this.monitor = monitor;
 
 		var queryEngine = this.model.getAdapter(ModelQueryAdapter.class);
-		var stateInterpretation = this.model.getInterpretation(this.symbolHolder.getStartSymbols().symbol);
-		this.symbolHolder.clockHolder.reset(this.timeProvider.getTime());
-		stateInterpretation.put(Tuple.of(), this.symbolHolder.clockHolder);
+		var stateInterpretation = this.model.getInterpretation(this.monitor.getStartSymbol().symbol);
+		this.monitor.clockHolder.reset(this.timeProvider.getTime());
+		stateInterpretation.put(Tuple.of(), this.monitor.clockHolder);
 		queryEngine.flushChanges();
 
 		this.model.addListener(this);
@@ -63,14 +61,7 @@ public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListen
 	}
 
 	@Override
-	public SymbolHolder getSymbols() {
-		return symbolHolder;
+	public Monitor getMonitor() {
+		return monitor;
 	}
-
-	@Override
-	public StateMachineSummary getSummary() {
-		return summary;
-	}
-
-
 }

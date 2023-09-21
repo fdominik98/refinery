@@ -3,27 +3,40 @@ package tools.refinery.store.monitor.internal.model;
 import java.util.*;
 
 public class StateMachine {
-	protected int stateId = 1;
-	public final Set<Transition> transitions;
-	public final Set<State> states;
+	private int stateId = 1;
+	public final Set<Transition> transitions = new HashSet<>();
+	public final Set<State> states = new HashSet<>();;
 	public final State startState;
-	public final ClockHolder clockHolder;
+	public final ClockHolder clockHolder = new ClockHolder();
+	private int maxWeight = 0;
 
-	public StateMachine() {
-		this.transitions = new HashSet<>();
-		this.states = new HashSet<>();
-		this.startState = this.createState(State.Type.START);
-		this.clockHolder = new ClockHolder();
+	public StateMachine(int startWeight) {
+		this.startState = this.createState(State.Type.START, startWeight);
 	}
 
-	public State createState(State.Type type) {
-		State s = new State(this.stateId++, type);
-		this.states.add(s);
-		return s;
+	public StateMachine() {
+		this.startState = this.createState(State.Type.START, 0);
 	}
 
 	public State createState() {
-		return createState(State.Type.INTERMEDIATE);
+		return createState(State.Type.INTERMEDIATE, 0);
+	}
+
+	public State createState(int weight) {return createState(State.Type.INTERMEDIATE, weight);}
+
+	public State createState(State.Type type) {return createState(type, 0);}
+
+	public State createState(State.Type type, int weight) {
+		State s = new State(this.stateId++, type, weight);
+		this.states.add(s);
+		if(maxWeight < s.weight) {
+			maxWeight = s.weight;
+		}
+		return s;
+	}
+
+	public int getMaxWeight() {
+		return maxWeight;
 	}
 
 	public Transition createTransition(State from, Guard guard, State to, ClockResetAction action) {

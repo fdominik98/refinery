@@ -6,7 +6,6 @@ import tools.refinery.store.query.literal.CallPolarity;
 import tools.refinery.store.query.term.Variable;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +13,7 @@ public class StateSymbol {
 
 	public final Symbol<ClockHolder> symbol;
 
-	private final RelationalQuery query;
+	public final RelationalQuery query;
 
 	public StateSymbol(Symbol<ClockHolder> symbol) {
 		this.symbol = symbol;
@@ -27,9 +26,5 @@ public class StateSymbol {
 			}
 			builder.clause(List.of(view.call(CallPolarity.POSITIVE, variables)));
 		});
-	}
-
-	public RelationalQuery getQuery(){
-		return query;
 	}
 }

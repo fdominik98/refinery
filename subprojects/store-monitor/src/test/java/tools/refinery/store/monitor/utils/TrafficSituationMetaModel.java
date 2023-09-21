@@ -37,9 +37,20 @@ public final class TrafficSituationMetaModel {
 	public Symbol pedestrianSymbol = Symbol.of("Pedestrian", 1);
 	public AnySymbolView pedestrianView = new KeyOnlyView<>(pedestrianSymbol);
 	public List<RelationalQuery> queries = new ArrayList<>();
+	public List<Symbol<Boolean>> symbols = new ArrayList<>();
 	public List<TransformationRule> transformationRules = new ArrayList<>();
 
 	public TrafficSituationMetaModel(){
+		symbols.add(cellSymbol);
+		symbols.add(southOfSymbol);
+		symbols.add(northOfSymbol);
+		symbols.add(westOfSymbol);
+		symbols.add(eastOfSymbol);
+		symbols.add(onCellSymbol);
+		symbols.add(laneSymbol);
+		symbols.add(actorSymbol);
+		symbols.add(carSymbol);
+		symbols.add(pedestrianSymbol);
 
 		RelationalQuery neighborhoodPrecondition = Query.of("neighborhoodPrecondition",
 				(builder, c1, c2) -> builder
@@ -62,8 +73,8 @@ public final class TrafficSituationMetaModel {
 		ActionFactory actionFactory = (model) -> {
 			var onCellInterpretation = model.getInterpretation(onCellSymbol);
 			return ((Tuple activation) -> {
-				onCellInterpretation.put(Tuple.of(activation.get(0), activation.get(2)), false);
-				onCellInterpretation.put(Tuple.of(activation.get(1), activation.get(2)), true);
+				onCellInterpretation.put(Tuple.of(activation.get(2), activation.get(0)), false);
+				onCellInterpretation.put(Tuple.of(activation.get(2), activation.get(1)), true);
 			});
 		};
 		transformationRules.add(new TransformationRule("MoveToNeighborRule", movePrecondition, actionFactory));
@@ -71,6 +82,7 @@ public final class TrafficSituationMetaModel {
 
 	private final RelationalQuery placedOnCells = Query.of((builder, actor1, cell1, actor2, cell2) -> {
 		builder.clause(
+				actor1.notEquivalent(actor2),
 				actorView.call(actor1),
 				cellView.call(cell1),
 				onCellView.call(actor1, cell1),
@@ -113,7 +125,9 @@ public final class TrafficSituationMetaModel {
 					literals.add(eastOfView.call(tempCell1, tempCell2));
 				}
 
-				tempCell1 = tempCell2;
+				if(x != 0){
+					tempCell1 = tempCell2;
+				}
 				// For Y direction
 				if (y > 0) {
 					for (int i = 0; i < y - 1; i++) {

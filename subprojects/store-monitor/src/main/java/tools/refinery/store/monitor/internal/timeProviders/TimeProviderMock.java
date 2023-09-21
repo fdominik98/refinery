@@ -1,8 +1,6 @@
-package tools.refinery.store.monitor.internal;
+package tools.refinery.store.monitor.internal.timeProviders;
 
-import tools.refinery.store.monitor.AbstractTimeProvider;
 import tools.refinery.store.monitor.TimeListener;
-import tools.refinery.store.representation.Symbol;
 
 public class TimeProviderMock extends AbstractTimeProvider {
 	int time = 0;

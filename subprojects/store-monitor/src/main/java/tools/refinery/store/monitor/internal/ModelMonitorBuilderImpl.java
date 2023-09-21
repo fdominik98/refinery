@@ -1,6 +1,6 @@
 package tools.refinery.store.monitor.internal;
 
-import tools.refinery.store.monitor.AbstractTimeProvider;
+import tools.refinery.store.monitor.internal.timeProviders.AbstractTimeProvider;
 import tools.refinery.store.monitor.ModelMonitorBuilder;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.adapter.AbstractModelAdapterBuilder;
@@ -27,25 +27,21 @@ import static tools.refinery.store.query.term.int_.IntTerms.*;
 public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMonitorStoreAdapterImpl>
 		implements ModelMonitorBuilder{
 
-	private StateMachine monitor;
 	private final List<BiConsumer<Model, Integer>> actionSet = new ArrayList<>();
 	private final Set<Query> querySet = new HashSet<>();
-	private SymbolHolder symbolHolder;
+	private Monitor monitor;
 	private AbstractTimeProvider timeProvider;
-	private final StateMachineSummary summary = new StateMachineSummary();
 
 
 	@Override
 	protected ModelMonitorStoreAdapterImpl doBuild(ModelStore store) {
-		return new ModelMonitorStoreAdapterImpl(store, timeProvider, actionSet, symbolHolder, summary);
+		return new ModelMonitorStoreAdapterImpl(store, timeProvider, actionSet, monitor);
 	}
 
 	@Override
-	public ModelMonitorBuilder monitor(StateMachine monitor) {
+	public ModelMonitorBuilder monitor(Monitor monitor) {
 		checkNotConfigured();
 		this.monitor = monitor;
-		StateMachineTraversal traverser = new StateMachineTraversal(monitor);
-		this.symbolHolder = traverser.symbolHolder;
 		return this;
 	}
 
@@ -59,13 +55,13 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 	@Override
 	public ModelMonitorBuilder withStateQueries() {
 		checkNotConfigured();
-		querySet.addAll(symbolHolder.queryList);
+		querySet.addAll(monitor.queryList);
 		return this;
 	}
 
 	@Override
 	protected void doConfigure(ModelStoreBuilder storeBuilder) {
-		storeBuilder.symbols(symbolHolder.symbolList);
+		storeBuilder.symbols(monitor.symbolList);
 
 		if (timeProvider != null){
 			BiConsumer<Model, Integer> refreshTimeAction = (model, now) -> {
@@ -78,9 +74,9 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 			storeBuilder.symbols(timeProvider.clockSymbol);
 		}
 
-		for (Transition t : monitor.transitions) {
-			for(List<NodeVariable> fromParamList : symbolHolder.get(t.from).keySet()){
-				Symbol<ClockHolder> fromStateSymbol = symbolHolder.get(t.from, fromParamList).symbol;
+		for (Transition t : monitor.stateMachine.transitions) {
+			for(List<NodeVariable> fromParamList : monitor.get(t.from).keySet()){
+				Symbol<ClockHolder> fromStateSymbol = monitor.get(t.from, fromParamList).symbol;
 
 				var query = Query.of(t + "_query", ClockHolder.class, (builder, output) -> {
 					List<Literal> literals = new ArrayList<>();
@@ -126,7 +122,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 						toParamList.add(p);
 					}
 				}
-				Symbol<ClockHolder> toStateSymbol = symbolHolder.get(t.to, toParamList).symbol;
+				Symbol<ClockHolder> toStateSymbol = monitor.get(t.to, toParamList).symbol;
 
 				BiConsumer<Model, Integer> action = (model, now) -> {
 					var queryEngine = model.getAdapter(ModelQueryAdapter.class);
@@ -145,28 +141,17 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 						ClockHolder clockHolder = new ClockHolder(cursor.getValue());
 						clockHolder.reset(t.action.clocksToReset, now);
 						toStateInterpretation.put(res, clockHolder);
-
-						switch(t.to.type){
-							case TRAP -> summary.trapStateCount++;
-							case ACCEPT -> summary.acceptStateCount++;
-							default -> summary.intermediateStateCount++;
-						}
-						switch(t.from.type){
-							case TRAP -> summary.trapStateCount--;
-							case ACCEPT -> summary.acceptStateCount--;
-							default -> summary.intermediateStateCount--;
-						}
 					}
 				};
 				actionSet.add(action);
 			}
 		}
 
-		BiConsumer<Model, Integer> lastFlushAction = (model, now) -> {
+		BiConsumer<Model, Integer> flushAction = (model, now) -> {
 			var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 			queryEngine.flushChanges();
 		};
-		actionSet.add(lastFlushAction);
+		actionSet.add(flushAction);
 
 		var queryBuilder = storeBuilder.getAdapter(ModelQueryBuilder.class);
 		queryBuilder.queries(querySet);

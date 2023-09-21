@@ -1,30 +1,43 @@
 package tools.refinery.store.monitor.utils;
 
-import tools.refinery.store.dse.DesignSpaceExplorationAdapter;
+import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.tuple.Tuple;
+import java.util.function.Supplier;
 
-public class SituationInitializer {
+public final class SituationInitializer {
+	private final Supplier<Tuple> objectCreator;
+	public final Tuple[][] grid;
+	public final Tuple actor1;
+	public final Tuple actor2;
+	public final Interpretation actorInterpretation;
+	public final Interpretation carInterpretation;
+	public final Interpretation onCellInterpretation;
+	public final Interpretation cellInterpretation;
+	public final Interpretation eastOfInterpretation;
+	public final Interpretation southOfInterpretation;
+	public final Interpretation westOfInterpretation;
+	public final Interpretation northOfInterpretation;
 
-	public Tuple[][] grid;
+	public SituationInitializer(Model model, Supplier<Tuple> objectCreator, TrafficSituationMetaModel metaModel,
+								int X, int Y) {
 
-	public SituationInitializer(Model model, TrafficSituationMetaModel metaModel, int X, int Y) {
+		this.objectCreator = objectCreator;
+
 		grid = new Tuple[X][Y];
 
-		var dseAdapter = model.getAdapter(DesignSpaceExplorationAdapter.class);
-
-		var actorInterpretation = model.getInterpretation(metaModel.actorSymbol);
-		var carInterpretation = model.getInterpretation(metaModel.carSymbol);
-		var onCellInterpretation = model.getInterpretation(metaModel.onCellSymbol);
-		var cellInterpretation = model.getInterpretation(metaModel.cellSymbol);
-		var eastOfInterpretation = model.getInterpretation(metaModel.eastOfSymbol);
-		var southOfInterpretation = model.getInterpretation(metaModel.southOfSymbol);
-		var westOfInterpretation = model.getInterpretation(metaModel.westOfSymbol);
-		var northOfInterpretation = model.getInterpretation(metaModel.northOfSymbol);
+		actorInterpretation = model.getInterpretation(metaModel.actorSymbol);
+		carInterpretation = model.getInterpretation(metaModel.carSymbol);
+		onCellInterpretation = model.getInterpretation(metaModel.onCellSymbol);
+		cellInterpretation = model.getInterpretation(metaModel.cellSymbol);
+		eastOfInterpretation = model.getInterpretation(metaModel.eastOfSymbol);
+		southOfInterpretation = model.getInterpretation(metaModel.southOfSymbol);
+		westOfInterpretation = model.getInterpretation(metaModel.westOfSymbol);
+		northOfInterpretation = model.getInterpretation(metaModel.northOfSymbol);
 
 		for(int x = 0; x < grid.length; x++) {
 			for(int y = 0; y < grid[x].length; y++) {
-				var cell = grid[x][y] = dseAdapter.createObject();
+				var cell = grid[x][y] = this.objectCreator.get();
 				cellInterpretation.put(cell, true);
 				if(x > 0){
 					eastOfInterpretation.put(Tuple.of(cell.get(0), grid[x - 1][y].get(0)), true);
@@ -37,15 +50,14 @@ public class SituationInitializer {
 			}
 		}
 
-		var actor1 = dseAdapter.createObject();
-		var actor2 = dseAdapter.createObject();
+		actor1 = this.objectCreator.get();
+		actor2 = this.objectCreator.get();
 
 		carInterpretation.put(actor1, true);
 		actorInterpretation.put(actor1, true);
-		onCellInterpretation.put(Tuple.of(actor1.get(0), grid[1][0].get(0)), true);
+		onCellInterpretation.put(Tuple.of(actor1.get(0), grid[0][0].get(0)), true);
 		carInterpretation.put(actor2, true);
 		actorInterpretation.put(actor2, true);
-		onCellInterpretation.put(Tuple.of(actor2.get(0), grid[2][0].get(0)), true);
-
+		onCellInterpretation.put(Tuple.of(actor2.get(0), grid[1][0].get(0)), true);
 	}
 }

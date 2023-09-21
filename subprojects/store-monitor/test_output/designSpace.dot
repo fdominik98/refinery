@@ -1,0 +1,10 @@
+digraph designSpace {
+nodesep=0
+ranksep=5
+node[
+	style=filled
+	fillcolor=white
+]
+0 [URL="./0.svg"]
+0 [shape = doublecircle]
+}

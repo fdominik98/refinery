@@ -2,16 +2,15 @@ package tools.refinery.store.monitor.internal;
 
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.query.term.NodeVariable;
-import tools.refinery.store.query.term.Variable;
 import tools.refinery.store.representation.Symbol;
 import java.util.*;
 
 public class StateMachineTraversal {
-	public final SymbolHolder symbolHolder;
+	public final Monitor monitor;
 
-	public StateMachineTraversal(StateMachine monitor){
-		symbolHolder = new SymbolHolder(monitor.startState, monitor.clockHolder);
-		getStateMap(monitor.startState);
+	public StateMachineTraversal(StateMachine stateMachine){
+		monitor = new Monitor(stateMachine, stateMachine.clockHolder);
+		getStateMap(stateMachine.startState);
 	}
 
 	private static class BFSNode {
@@ -39,7 +38,7 @@ public class StateMachineTraversal {
 			var symbol = new StateSymbol(Symbol.of(representation, currentNode.parameters.size(), ClockHolder.class,
 					null));
 
-			symbolHolder.put(currentNode.state, new ArrayList<>(currentNode.parameters), symbol);
+			monitor.put(currentNode.state, new ArrayList<>(currentNode.parameters), symbol);
 
 			// Process outgoing transitions
 			for (Transition transition : currentNode.state.transitionsOut) {
@@ -49,7 +48,7 @@ public class StateMachineTraversal {
 						newParamsList.add(p);
 					}
 				}
-				if (symbolHolder.containsKey(transition.to, newParamsList)){
+				if (monitor.containsKey(transition.to, newParamsList)){
 					continue;
 				}
 				queue.add(new BFSNode(transition.to, newParamsList));

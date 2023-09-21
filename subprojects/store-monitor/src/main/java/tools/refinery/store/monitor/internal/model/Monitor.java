@@ -2,18 +2,17 @@ package tools.refinery.store.monitor.internal.model;
 
 import tools.refinery.store.query.dnf.RelationalQuery;
 import tools.refinery.store.query.term.NodeVariable;
-import tools.refinery.store.query.term.Variable;
 import tools.refinery.store.representation.Symbol;
 import java.util.*;
 
-public class SymbolHolder {
+public class Monitor {
+	public final StateMachine stateMachine;
 	public final ClockHolder clockHolder;
-	private final State startState;
 	public final List<Symbol<ClockHolder>> symbolList = new ArrayList<>();
 	public final List<RelationalQuery> queryList = new ArrayList<>();
 
-	public SymbolHolder(State startState, ClockHolder clockHolder){
-		this.startState = startState;
+	public Monitor(StateMachine stateMachine, ClockHolder clockHolder){
+		this.stateMachine = stateMachine;
 		this.clockHolder = clockHolder;
 	}
 	private Map<State, Map<List<NodeVariable>, StateSymbol>> symbols = new HashMap<>();
@@ -30,11 +29,11 @@ public class SymbolHolder {
 		symbols.putIfAbsent(s, new HashMap<>());
 		symbols.get(s).put(ps, sts);
 		symbolList.add(sts.symbol);
-		queryList.add(sts.getQuery());
+		queryList.add(sts.query);
 	}
 
-	public StateSymbol getStartSymbols(){
-		return symbols.get(startState).get(List.of());
+	public StateSymbol getStartSymbol(){
+		return symbols.get(stateMachine.startState).get(List.of());
 	}
 
 	public boolean containsKey(State s, List ps) {

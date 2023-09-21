@@ -1,6 +1,6 @@
-package tools.refinery.store.monitor.internal;
+package tools.refinery.store.monitor.internal.timeProviders;
 
-import tools.refinery.store.monitor.AbstractTimeProvider;
+import tools.refinery.store.monitor.internal.timeProviders.AbstractTimeProvider;
 import tools.refinery.store.monitor.TimeListener;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
