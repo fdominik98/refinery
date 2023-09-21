@@ -1,12 +1,12 @@
 package tools.refinery.store.monitor.utils;
 
+import tools.refinery.store.dse.modification.ModificationAdapter;
 import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.tuple.Tuple;
 import java.util.function.Supplier;
 
 public final class SituationInitializer {
-	private final Supplier<Tuple> objectCreator;
 	public final Tuple[][] grid;
 	public final Tuple actor1;
 	public final Tuple actor2;
@@ -19,11 +19,9 @@ public final class SituationInitializer {
 	public final Interpretation westOfInterpretation;
 	public final Interpretation northOfInterpretation;
 
-	public SituationInitializer(Model model, Supplier<Tuple> objectCreator, TrafficSituationMetaModel metaModel,
+	public SituationInitializer(Model model, TrafficSituationMetaModel metaModel,
 								int X, int Y) {
-
-		this.objectCreator = objectCreator;
-
+		var modificationAdapter = model.getAdapter(ModificationAdapter.class);
 		grid = new Tuple[X][Y];
 
 		actorInterpretation = model.getInterpretation(metaModel.actorSymbol);
@@ -37,7 +35,7 @@ public final class SituationInitializer {
 
 		for(int x = 0; x < grid.length; x++) {
 			for(int y = 0; y < grid[x].length; y++) {
-				var cell = grid[x][y] = this.objectCreator.get();
+				var cell = grid[x][y] = modificationAdapter.createObject();
 				cellInterpretation.put(cell, true);
 				if(x > 0){
 					eastOfInterpretation.put(Tuple.of(cell.get(0), grid[x - 1][y].get(0)), true);
@@ -50,8 +48,8 @@ public final class SituationInitializer {
 			}
 		}
 
-		actor1 = this.objectCreator.get();
-		actor2 = this.objectCreator.get();
+		actor1 = modificationAdapter.createObject();
+		actor2 = modificationAdapter.createObject();
 
 		carInterpretation.put(actor1, true);
 		actorInterpretation.put(actor1, true);

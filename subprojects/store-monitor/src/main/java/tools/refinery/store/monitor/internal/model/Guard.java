@@ -3,6 +3,8 @@ package tools.refinery.store.monitor.internal.model;
 import tools.refinery.store.query.dnf.RelationalQuery;
 
 public class Guard {
+	public boolean negated = false;
+
 	public RelationalQuery query;
 	public TimeConstraint[] timeConstraints;
 	public Guard(RelationalQuery query, TimeConstraint... timeConstraints) {
@@ -21,5 +23,11 @@ public class Guard {
 
 	public static Guard of(RelationalQuery query, TimeConstraint... timeConstraints) {
 		return new Guard(query, timeConstraints);
+	}
+
+	public Guard neg(){
+		var guard = Guard.of(query, timeConstraints);
+		guard.negated = true;
+		return guard;
 	}
 }

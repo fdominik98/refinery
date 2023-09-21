@@ -1,7 +1,6 @@
 package tools.refinery.store.monitor.utils;
 
-import tools.refinery.store.dse.ActionFactory;
-import tools.refinery.store.dse.internal.TransformationRule;
+import tools.refinery.store.dse.transition.Rule;
 import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.dnf.RelationalQuery;
@@ -10,9 +9,10 @@ import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.query.view.AnySymbolView;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
-import tools.refinery.store.tuple.Tuple;
 import java.util.ArrayList;
 import java.util.List;
+import static tools.refinery.store.dse.transition.actions.ActionLiterals.add;
+import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
 
 public final class TrafficSituationMetaModel {
 	public Symbol cellSymbol = Symbol.of("Cell", 1);
@@ -28,17 +28,16 @@ public final class TrafficSituationMetaModel {
 	public Symbol onCellSymbol = Symbol.of("OnCell", 2);
 	public AnySymbolView onCellView = new KeyOnlyView<>(onCellSymbol);
 	public Symbol laneSymbol = Symbol.of("Lane", 1);
-	public AnySymbolView laneView = new KeyOnlyView<>(laneSymbol);
+	//public AnySymbolView laneView = new KeyOnlyView<>(laneSymbol);
 	public Symbol actorSymbol = Symbol.of("Actor", 1);
 	public AnySymbolView actorView = new KeyOnlyView<>(actorSymbol);
 	public Symbol carSymbol = Symbol.of("Car", 1);
-	public AnySymbolView carView = new KeyOnlyView<>(carSymbol);
-	public Interpretation<Boolean> carInterpretation;
+	//public AnySymbolView carView = new KeyOnlyView<>(carSymbol);
+	//public Interpretation<Boolean> carInterpretation;
 	public Symbol pedestrianSymbol = Symbol.of("Pedestrian", 1);
-	public AnySymbolView pedestrianView = new KeyOnlyView<>(pedestrianSymbol);
-	public List<RelationalQuery> queries = new ArrayList<>();
+	//public AnySymbolView pedestrianView = new KeyOnlyView<>(pedestrianSymbol);
 	public List<Symbol<Boolean>> symbols = new ArrayList<>();
-	public List<TransformationRule> transformationRules = new ArrayList<>();
+	public List<Rule> transformationRules = new ArrayList<>();
 
 	public TrafficSituationMetaModel(){
 		symbols.add(cellSymbol);
@@ -59,25 +58,21 @@ public final class TrafficSituationMetaModel {
 						.clause(westOfView.call(c1, c2))
 						.clause(northOfView.call(c1, c2))
 		);
-		RelationalQuery movePrecondition = Query.of("movePrecondition",
-				(builder, c1, c2, a1) -> builder.clause(
+
+		var moveToNeighborRule = Rule.of("MoveToNeighborRule", (builder, c1, c2, a1) -> builder
+				.clause(
 						actorView.call(a1),
 						cellView.call(c1),
 						onCellView.call(a1, c1),
 						cellView.call(c2),
 						neighborhoodPrecondition.call(c1, c2)
 				)
+				.action(
+						remove(onCellSymbol, a1, c1),
+						add(onCellSymbol, a1, c2)
+				)
 		);
-		queries.add(movePrecondition);
-
-		ActionFactory actionFactory = (model) -> {
-			var onCellInterpretation = model.getInterpretation(onCellSymbol);
-			return ((Tuple activation) -> {
-				onCellInterpretation.put(Tuple.of(activation.get(2), activation.get(0)), false);
-				onCellInterpretation.put(Tuple.of(activation.get(2), activation.get(1)), true);
-			});
-		};
-		transformationRules.add(new TransformationRule("MoveToNeighborRule", movePrecondition, actionFactory));
+		transformationRules.add(moveToNeighborRule);
 	}
 
 	private final RelationalQuery placedOnCells = Query.of((builder, actor1, cell1, actor2, cell2) -> {

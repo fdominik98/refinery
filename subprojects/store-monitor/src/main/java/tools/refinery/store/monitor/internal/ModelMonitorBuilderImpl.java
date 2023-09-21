@@ -21,7 +21,7 @@ import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
 import java.util.*;
 import java.util.function.BiConsumer;
-
+import static tools.refinery.store.query.literal.Literals.check;
 import static tools.refinery.store.query.term.int_.IntTerms.*;
 
 public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMonitorStoreAdapterImpl>
@@ -92,7 +92,12 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 						List<NodeVariable> newVariables = new ArrayList<>(t.getParameters());
 						newVariables.removeAll(fromParamList);
 						builder.parameters(newVariables);
-						literals.add(t.guard.query.call(CallPolarity.POSITIVE, t.getParameters()));
+						if (t.guard.negated){
+							literals.add(t.guard.query.call(CallPolarity.NEGATIVE, t.getParameters()));
+						}
+						else {
+							literals.add(t.guard.query.call(CallPolarity.POSITIVE, t.getParameters()));
+						}
 					}
 
 					if(t.guard.timeConstraints.length != 0){
@@ -104,11 +109,11 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 							var time = new ClockValueTerm(output, new ConstantTerm<>(Clock.class, tc.clock));
 							if(tc instanceof ClockGreaterThanTimeConstraint) {
 								var term = greater(sub(now, time), constant(tc.timeSpan));
-								literals.add(Literals.assume(term));
+								literals.add(check(term));
 							}
 							else if(tc instanceof ClockLessThanTimeConstraint) {
 								var term = less(sub(now, time), constant(tc.timeSpan));
-								literals.add(Literals.assume(term));
+								literals.add(Literals.check(term));
 							}
 						}
 					}

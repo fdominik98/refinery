@@ -6,7 +6,7 @@
 package tools.refinery.store.monitor;
 
 import org.junit.jupiter.api.Test;
-import tools.refinery.store.dse.DesignSpaceExplorationAdapter;
+import tools.refinery.store.dse.modification.ModificationAdapter;
 import tools.refinery.store.monitor.internal.StateMachineTraversal;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.model.ModelStore;
@@ -16,8 +16,8 @@ import tools.refinery.store.monitor.utils.TrafficSituationAutomaton;
 import tools.refinery.store.monitor.utils.TrafficSituationMetaModel;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.query.dnf.Query;
+import tools.refinery.store.query.interpreter.QueryInterpreterAdapter;
 import tools.refinery.store.query.term.Variable;
-import tools.refinery.store.query.viatra.ViatraModelQueryAdapter;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
@@ -68,7 +68,7 @@ class AdapterTest {
 
 		var store = ModelStore.builder()
 				.symbols(hasBehind, actor)
-				.with(ViatraModelQueryAdapter.builder())
+				.with(QueryInterpreterAdapter.builder())
 				.with(ModelMonitorAdapter.builder()
 						.monitor(traverser.monitor)
 						.timeProvider(timeProvider)
@@ -149,11 +149,6 @@ class AdapterTest {
 				Tuple.of(0, 2, 1), true), inState1Results2);
 	}
 
-	int modelSize = 0;
-	public Tuple createObject() {
-		return Tuple.of(modelSize++);
-	}
-
 	@Test
 	void TestTrafficSituationStateMachine() {
 		var metaModel = new TrafficSituationMetaModel();
@@ -162,8 +157,8 @@ class AdapterTest {
 
 		var store = ModelStore.builder()
 				.symbols(metaModel.symbols)
-				.with(ViatraModelQueryAdapter.builder()
-						.queries(metaModel.queries))
+				.with(ModificationAdapter.builder())
+				.with(QueryInterpreterAdapter.builder())
 				.with(ModelMonitorAdapter.builder()
 						.monitor(traverser.monitor)
 						.withStateQueries())
@@ -184,8 +179,7 @@ class AdapterTest {
 				scenario.a2)).query);
 
 		// Init model
-		SituationInitializer initializer = new SituationInitializer(model, this::createObject, metaModel, 2,
-				5);
+		SituationInitializer initializer = new SituationInitializer(model, metaModel, 2,	5);
 
 		Tuple actors = Tuple.of(initializer.actor1.get(0), initializer.actor2.get(0));
 

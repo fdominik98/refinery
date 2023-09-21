@@ -23,7 +23,6 @@ include(
 		"store-query",
 		"store-query-interpreter",
 		"store-reasoning",
-		"visualization",
 		"store-monitor",
 		"store-reasoning-scope"
 )
