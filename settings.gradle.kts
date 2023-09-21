@@ -8,6 +8,10 @@ rootProject.name = "refinery"
 
 include(
 		"frontend",
+		"interpreter",
+		"interpreter-localsearch",
+		"interpreter-rete",
+		"interpreter-rete-recipes",
 		"language",
 		"language-ide",
 		"language-model",
@@ -15,11 +19,13 @@ include(
 		"language-web",
 		"store",
 		"store-dse",
+		"store-dse-visualization",
 		"store-query",
-		"store-query-viatra",
+		"store-query-interpreter",
 		"store-reasoning",
 		"visualization",
-		"store-monitor"
+		"store-monitor",
+		"store-reasoning-scope"
 )
 
 for (project in rootProject.children) {
