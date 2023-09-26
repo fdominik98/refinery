@@ -16,10 +16,10 @@ public class State {
 	public final List<Transition> transitionsIn = new ArrayList<>();
 
 	public final int id;
-	public final int weight;
+	public final double weight;
 	public final Type type;
 
-	public State(int id, Type type, int weight) {
+	public State(int id, Type type, double weight) {
 		this.id = id;
 		this.type = type;
 		this.weight = weight;

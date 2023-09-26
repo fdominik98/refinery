@@ -8,7 +8,7 @@ public class StateMachine {
 	public final Set<State> states = new HashSet<>();;
 	public final State startState;
 	public final ClockHolder clockHolder = new ClockHolder();
-	private int maxWeight = 0;
+	private double maxWeight = 0;
 
 	public StateMachine(int startWeight) {
 		this.startState = this.createState(State.Type.START, startWeight);
@@ -26,7 +26,7 @@ public class StateMachine {
 
 	public State createState(State.Type type) {return createState(type, 0);}
 
-	public State createState(State.Type type, int weight) {
+	public State createState(State.Type type, double weight) {
 		State s = new State(this.stateId++, type, weight);
 		this.states.add(s);
 		if(maxWeight < s.weight) {
@@ -35,7 +35,7 @@ public class StateMachine {
 		return s;
 	}
 
-	public int getMaxWeight() {
+	public double getMaxWeight() {
 		return maxWeight;
 	}
 

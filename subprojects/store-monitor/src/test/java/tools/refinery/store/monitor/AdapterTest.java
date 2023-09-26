@@ -11,9 +11,9 @@ import tools.refinery.store.monitor.internal.StateMachineTraversal;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.model.ModelStore;
 import tools.refinery.store.monitor.internal.timeProviders.TimeProviderMock;
-import tools.refinery.store.monitor.utils.SituationInitializer;
-import tools.refinery.store.monitor.utils.TrafficSituationAutomaton;
-import tools.refinery.store.monitor.utils.TrafficSituationMetaModel;
+import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationInitializer;
+import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationAutomaton;
+import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationMetaModel;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.interpreter.QueryInterpreterAdapter;
@@ -179,7 +179,7 @@ class AdapterTest {
 				scenario.a2)).query);
 
 		// Init model
-		SituationInitializer initializer = new SituationInitializer(model, metaModel, 2,	5);
+		TrafficSituationInitializer initializer = new TrafficSituationInitializer(model, metaModel, 2,	5);
 
 		Tuple actors = Tuple.of(initializer.actor1.get(0), initializer.actor2.get(0));
 

@@ -34,6 +34,9 @@ public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListen
 
 		this.model.addListener(this);
 		this.timeProvider.addListener(this);
+
+		var fitnessInterpretation = this.model.getInterpretation(this.monitor.fitnessSymbol);
+		fitnessInterpretation.put(Tuple.of(), (double)monitor.stateMachine.startState.weight);
 	}
 
 	@Override

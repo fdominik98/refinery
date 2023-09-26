@@ -62,6 +62,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 	@Override
 	protected void doConfigure(ModelStoreBuilder storeBuilder) {
 		storeBuilder.symbols(monitor.symbolList);
+		storeBuilder.symbol(monitor.fitnessSymbol);
 
 		if (timeProvider != null){
 			BiConsumer<Model, Integer> refreshTimeAction = (model, now) -> {
@@ -145,7 +146,9 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 						fromStateInterpretation.put(fromTuple, null);
 						ClockHolder clockHolder = new ClockHolder(cursor.getValue());
 						clockHolder.reset(t.action.clocksToReset, now);
-						toStateInterpretation.put(res, clockHolder);
+						if (t.to.type != State.Type.TRAP) {
+							toStateInterpretation.put(res, clockHolder);
+						}
 					}
 				};
 				actionSet.add(action);
@@ -157,6 +160,23 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 			queryEngine.flushChanges();
 		};
 		actionSet.add(flushAction);
+
+		BiConsumer<Model, Integer> fitnessActon = (model, now) -> {
+			var queryEngine = model.getAdapter(ModelQueryAdapter.class);
+			double minWeight = Double.MAX_VALUE;
+
+			for(State s : monitor.stateMachine.states) {
+				for(var entry : monitor.get(s).entrySet()) {
+					var resultSet = queryEngine.getResultSet(entry.getValue().query);
+					if(resultSet.size() != 0 && minWeight > s.weight) {
+						minWeight = s.weight;
+					}
+				}
+			}
+			var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
+			fitnessInterpretation.put(Tuple.of(), minWeight);
+		};
+		actionSet.add(fitnessActon);
 
 		var queryBuilder = storeBuilder.getAdapter(ModelQueryBuilder.class);
 		queryBuilder.queries(querySet);

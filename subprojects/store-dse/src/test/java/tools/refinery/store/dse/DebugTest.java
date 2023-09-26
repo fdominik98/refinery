@@ -38,7 +38,7 @@ class DebugTest {
 	private static final AnySymbolView classModelView = new KeyOnlyView<>(classModel);
 
 	@Test
-	@Disabled("This test is only for debugging purposes")
+	//@Disabled("This test is only for debugging purposes")
 	void BFSTest() {
 		var createClassRule = Rule.of("CreateClass", (builder, model) -> builder
 				.clause(
@@ -95,5 +95,6 @@ class DebugTest {
 		bestFirst.startExploration(initialVersion);
 		var resultStore = bestFirst.getSolutionStore();
 		System.out.println("states size: " + resultStore.getSolutions().size());
+		model.getAdapter(ModelVisualizerAdapter.class).visualize(bestFirst.getVisualizationStore());
 	}
 }

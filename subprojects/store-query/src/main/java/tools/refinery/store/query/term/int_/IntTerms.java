@@ -44,6 +44,10 @@ public final class IntTerms {
 		return new IntSubTerm(left, right);
 	}
 
+	public static Term<Integer> distance(Term<Integer> left, Term<Integer> right) {
+		return new IntAbsDistTerm(left, right);
+	}
+
 	public static Term<Integer> mul(Term<Integer> left, Term<Integer> right) {
 		return new IntMulTerm(left, right);
 	}
