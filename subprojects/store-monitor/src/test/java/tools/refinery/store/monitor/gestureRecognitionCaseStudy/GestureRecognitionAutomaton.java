@@ -14,6 +14,8 @@ public class GestureRecognitionAutomaton {
 	public final State s3;
 	public final State s4;
 	public final State s5;
+	public final State s6;
+	public final State s7;
 	public final NodeVariable body;
 
 
@@ -22,15 +24,26 @@ public class GestureRecognitionAutomaton {
 		s3 = stateMachine.createState(2);
 		s4 = stateMachine.createState( 1);
 		s5 = stateMachine.createState(State.Type.ACCEPT, 0);
+		s6 = stateMachine.createState( 10);
+		s7 = stateMachine.createState(10);
 
 		body =  NodeVariable.of("body");
 
-		var guard_rightHandAboveHead = Guard.of(metaModel.rightHandAboveHead(body));
-		var guard_stretchedRightArm = Guard.of(metaModel.stretchedRightArm(body));
+		var rightHandAboveHead = Guard.of(metaModel.rightHandAboveHead(body));
+		var stretchedRightArm = Guard.of(metaModel.stretchedRightArm(body));
+		var rightHandMovedUp = Guard.of(metaModel.rightHandMovedUp(body));
+		var stretchedRightArmAndMovedDown = Guard.of(metaModel.stretchedRightArmAndMovedDown(body));
 
-		stateMachine.createTransition(s1, guard_stretchedRightArm, s2);
-		stateMachine.createTransition(s2, guard_stretchedRightArm.neg(), s3);
-		stateMachine.createTransition(s3, guard_rightHandAboveHead, s4);
-		stateMachine.createTransition(s4, guard_rightHandAboveHead.neg(), s5);
+		stateMachine.createTransition(s1, stretchedRightArm, s2);
+		stateMachine.createTransition(s2, rightHandMovedUp.neg(), s7);
+		stateMachine.createTransition(s7, stretchedRightArm, s2);
+
+
+		stateMachine.createTransition(s2, stretchedRightArm.neg(), s3);
+
+		stateMachine.createTransition(s3, stretchedRightArm, s6);
+
+		stateMachine.createTransition(s3, rightHandAboveHead, s4);
+		stateMachine.createTransition(s4, rightHandAboveHead.neg(), s5);
 	}
 }

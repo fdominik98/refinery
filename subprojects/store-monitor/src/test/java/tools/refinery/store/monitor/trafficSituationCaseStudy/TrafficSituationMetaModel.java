@@ -1,7 +1,6 @@
 package tools.refinery.store.monitor.trafficSituationCaseStudy;
 
 import tools.refinery.store.dse.transition.Rule;
-import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.dnf.RelationalQuery;
 import tools.refinery.store.query.literal.Literal;
@@ -28,16 +27,14 @@ public final class TrafficSituationMetaModel {
 	public Symbol onCellSymbol = Symbol.of("OnCell", 2);
 	public AnySymbolView onCellView = new KeyOnlyView<>(onCellSymbol);
 	public Symbol laneSymbol = Symbol.of("Lane", 1);
-	//public AnySymbolView laneView = new KeyOnlyView<>(laneSymbol);
 	public Symbol actorSymbol = Symbol.of("Actor", 1);
 	public AnySymbolView actorView = new KeyOnlyView<>(actorSymbol);
 	public Symbol carSymbol = Symbol.of("Car", 1);
-	//public AnySymbolView carView = new KeyOnlyView<>(carSymbol);
-	//public Interpretation<Boolean> carInterpretation;
 	public Symbol pedestrianSymbol = Symbol.of("Pedestrian", 1);
-	//public AnySymbolView pedestrianView = new KeyOnlyView<>(pedestrianSymbol);
 	public List<Symbol<Boolean>> symbols = new ArrayList<>();
 	public List<Rule> transformationRules = new ArrayList<>();
+
+	public Symbol dummySymbol = Symbol.of("DummySymbol", 2);
 
 	public TrafficSituationMetaModel(){
 		symbols.add(cellSymbol);
@@ -50,6 +47,7 @@ public final class TrafficSituationMetaModel {
 		symbols.add(actorSymbol);
 		symbols.add(carSymbol);
 		symbols.add(pedestrianSymbol);
+		symbols.add(dummySymbol);
 
 		RelationalQuery neighborhoodPrecondition = Query.of("neighborhoodPrecondition",
 				(builder, c1, c2) -> builder
@@ -59,7 +57,7 @@ public final class TrafficSituationMetaModel {
 						.clause(northOfView.call(c1, c2))
 		);
 
-		var moveToNeighborRule = Rule.of("MoveToNeighborRule", (builder, c1, c2, a1) -> builder
+		var moveToNeighborRule = Rule.of("MoveToNeighborRule", (builder, a1, c1, c2) -> builder
 				.clause(
 						actorView.call(a1),
 						cellView.call(c1),
@@ -72,7 +70,18 @@ public final class TrafficSituationMetaModel {
 						add(onCellSymbol, a1, c2)
 				)
 		);
+
+		var dummyRule = Rule.of("DummyRule", (builder, c1, c2) -> builder
+				.clause(
+						cellView.call(c1),
+						cellView.call(c2)
+				)
+				.action(
+						add(dummySymbol, c1, c2)
+				)
+		);
 		transformationRules.add(moveToNeighborRule);
+		transformationRules.add(dummyRule);
 	}
 
 	private final RelationalQuery placedOnCells = Query.of((builder, actor1, cell1, actor2, cell2) -> {

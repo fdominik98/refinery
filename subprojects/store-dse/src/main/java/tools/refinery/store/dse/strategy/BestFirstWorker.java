@@ -147,7 +147,7 @@ public class BestFirstWorker {
 		if (isVisualizationEnabled && submitResult.newVersion() != null) {
 			var newVersion = submitResult.newVersion().version();
 			visualizationStore.addTransition(oldVersion, newVersion,
-					"fire: " + visitResult.transformation() + ", " + visitResult.activation());
+					visitResult.transformation().getDefinition().getName() + ", " + visitResult.activation());
 		}
 		return new RandomVisitResult(submitResult, visitResult.mayHaveMore());
 	}

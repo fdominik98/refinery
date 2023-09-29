@@ -5,6 +5,7 @@ import tools.refinery.store.monitor.gestureRecognitionCaseStudy.actions.Increase
 import tools.refinery.store.monitor.utils.VectorYTerm;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.dnf.RelationalQuery;
+import tools.refinery.store.query.literal.CallPolarity;
 import tools.refinery.store.query.term.DataVariable;
 import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.query.term.Variable;
@@ -14,6 +15,9 @@ import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 import java.util.ArrayList;
 import java.util.List;
+
+import static tools.refinery.store.dse.transition.actions.ActionLiterals.put;
+import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
 import static tools.refinery.store.query.literal.Literals.check;
 import static tools.refinery.store.query.term.int_.IntTerms.*;
 
@@ -40,6 +44,9 @@ public class GestureRecognitionMetaModel {
 	public AnySymbolView rightShoulderView = new FunctionView<>(rightShoulderSymbol);
 	public Symbol headSymbol = Symbol.of("Head",2, Vector.class);
 	public AnySymbolView headView = new FunctionView<>(headSymbol);
+
+	public Symbol handMovedUpSymbol = Symbol.of("HandMovedUp", 2);
+	public AnySymbolView handMovedUpView = new FunctionView<>(handMovedUpSymbol);
 
 	public List<Symbol<Boolean>> symbols = new ArrayList<>();
 	public List<Rule> transformationRules = new ArrayList<>();
@@ -116,60 +123,67 @@ public class GestureRecognitionMetaModel {
 		symbols.add(rightElbowSymbol);
 		symbols.add(rightShoulderSymbol);
 		symbols.add(headSymbol);
+		symbols.add(handMovedUpSymbol);
 
 		var moveHandDownRule = Rule.of("MoveHandDownRule", (builder, body, hand) -> {
 			builder.clause(handCondition(false).call(body, hand))
 					.action(
-							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, -1))
+							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, -1)),
+							remove(handMovedUpSymbol, body, hand)
 					);
 		});
 		var moveHandUpRule = Rule.of("MoveHandUpRule", (builder, body, hand) -> {
 			builder.clause(handCondition(true).call(body, hand))
 					.action(
-							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1))
+							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
+							put(handMovedUpSymbol, body, hand)
 					);
 		});
 		var moveElbowDownRule = Rule.of("MoveElbowDownRule", (builder, body, elbow, hand) -> {
 			builder.clause(elbowCondition(false).call(body, elbow, hand))
 					.action(
 							new IncreaseVectorActionLiteral(rightElbowSymbol, List.of(body, elbow), Vector.of(0, -1)),
-							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, -1))
+							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, -1)),
+							remove(handMovedUpSymbol, body, hand)
 					);
 		});
 		var moveElbowUpRule = Rule.of("MoveElbowUpRule", (builder, body, elbow, hand) -> {
 			builder.clause(elbowCondition(true).call(body, elbow, hand))
 					.action(
 							new IncreaseVectorActionLiteral(rightElbowSymbol, List.of(body, elbow), Vector.of(0, 1)),
-							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1))
+							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
+							put(handMovedUpSymbol, body, hand)
 					);
 		});
 
 		var moveShoulderDownRule = Rule.of("MoveShoulderDownRule", builder -> {
 			var body = builder.parameter();
 			var head = builder.parameter();
-			var elbow = builder.parameter();
 			var shoulder = builder.parameter();
+			var elbow = builder.parameter();
 			var hand = builder.parameter();
 			builder.clause(shoulderCondition(false).call(body, head, elbow, shoulder, hand))
 					.action(
 							new IncreaseVectorActionLiteral(rightElbowSymbol, List.of(body, elbow), Vector.of(0, -1)),
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, -1)),
 							new IncreaseVectorActionLiteral(rightShoulderSymbol,
-									List.of(body, shoulder), Vector.of(0,-1))
+									List.of(body, shoulder), Vector.of(0,-1)),
+							remove(handMovedUpSymbol, body, hand)
 					);
 		});
 		var moveShoulderUpRule = Rule.of("MoveShoulderUpRule", builder -> {
 			var body = builder.parameter();
 			var head = builder.parameter();
-			var elbow = builder.parameter();
 			var shoulder = builder.parameter();
+			var elbow = builder.parameter();
 			var hand = builder.parameter();
 			builder.clause(shoulderCondition(true).call(body, head, elbow, shoulder, hand))
 					.action(
 							new IncreaseVectorActionLiteral(rightElbowSymbol, List.of(body, elbow), Vector.of(0, 1)),
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
 							new IncreaseVectorActionLiteral(rightShoulderSymbol,
-									List.of(body, shoulder), Vector.of(0,1))
+									List.of(body, shoulder), Vector.of(0,1)),
+							put(handMovedUpSymbol, body, hand)
 					);
 		});
 
@@ -181,7 +195,7 @@ public class GestureRecognitionMetaModel {
 		transformationRules.add(moveShoulderDownRule);
 	}
 
-	public RelationalQuery rightHandAboveHead(NodeVariable body) {
+	public RelationalQuery rightHandAboveHead(NodeVariable body){
 		return Query.of((builder) -> {
 			var rightHand = Variable.of();
 			var head = Variable.of();
@@ -221,4 +235,27 @@ public class GestureRecognitionMetaModel {
 			);
 		});
 	}
+
+	public RelationalQuery rightHandMovedUp(NodeVariable body){
+		return Query.of((builder) -> {
+			var rightHand = Variable.of();
+			DataVariable<Vector> rightHandVector = Variable.of(Vector.class);
+			builder.clause(
+					bodyView.call(body),
+					rightHandView.call(body, rightHand, rightHandVector),
+					handMovedUpView.call(body, rightHand)
+			);
+		});
+	}
+
+	public RelationalQuery stretchedRightArmAndMovedDown(NodeVariable body){
+		return Query.of((builder) -> {
+			builder.clause(
+					rightHandMovedUp(body).call(CallPolarity.NEGATIVE, body),
+					stretchedRightArm(body).call(body)
+			);
+		});
+	}
 }
+
+

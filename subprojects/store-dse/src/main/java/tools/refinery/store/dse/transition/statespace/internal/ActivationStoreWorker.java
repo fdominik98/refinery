@@ -30,7 +30,8 @@ public class ActivationStoreWorker {
 	}
 
 
-	public ActivationStore.VisitResult fireRandomActivation(VersionWithObjectiveValue thisVersion, Random random) {
+	public ActivationStore.VisitResultObject fireRandomActivation(VersionWithObjectiveValue thisVersion,
+																  Random random) {
 		var result = store.getRandomAndMarkAsVisited(thisVersion, random);
 		if (result.successfulVisit()) {
 			int selectedTransformation = result.transformation();
@@ -41,15 +42,15 @@ public class ActivationStoreWorker {
 
 			boolean success = transformation.fireActivation(tuple);
 			if (success) {
-				return result;
+				return ActivationStore.tovisitresultobject(result, transformation);
 			} else {
-				return new ActivationStore.VisitResult(
+				return new ActivationStore.VisitResultObject(
 						false,
 						result.mayHaveMore(),
-						selectedTransformation,
-						selectedActivation);
+						transformation,
+						tuple);
 			}
 		}
-		return result;
+		return ActivationStore.tovisitresultobject(result, null);
 	}
 }

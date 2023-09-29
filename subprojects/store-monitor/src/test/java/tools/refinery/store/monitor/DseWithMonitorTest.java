@@ -95,6 +95,8 @@ class DseWithMonitorTest {
 				)
 				.with(DesignSpaceExplorationAdapter.builder()
 						.transformations(metaModel.transformationRules)
+						.exclude(new MonitorBasedCriteria(traverser.monitor, true))
+						.accept(new MonitorBasedCriteria(traverser.monitor, false))
 						.objective(new MonitorBasedObjective(traverser.monitor))
 				)
 				.build();

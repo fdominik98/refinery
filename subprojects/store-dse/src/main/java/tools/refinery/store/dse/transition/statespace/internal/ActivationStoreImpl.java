@@ -5,6 +5,7 @@
  */
 package tools.refinery.store.dse.transition.statespace.internal;
 
+import tools.refinery.store.dse.transition.Transformation;
 import tools.refinery.store.dse.transition.VersionWithObjectiveValue;
 import tools.refinery.store.dse.transition.statespace.ActivationStore;
 
