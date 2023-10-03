@@ -5,7 +5,6 @@ import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.dnf.RelationalQuery;
 import tools.refinery.store.query.literal.Literal;
 import tools.refinery.store.query.term.NodeVariable;
-import tools.refinery.store.query.view.AnySymbolView;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 import java.util.ArrayList;
@@ -14,27 +13,25 @@ import static tools.refinery.store.dse.transition.actions.ActionLiterals.add;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
 
 public final class TrafficSituationMetaModel {
-	public Symbol cellSymbol = Symbol.of("Cell", 1);
-	public AnySymbolView cellView = new KeyOnlyView<>(cellSymbol);
-	public Symbol southOfSymbol = Symbol.of("SouthOf", 2);
-	public AnySymbolView southOfView = new KeyOnlyView<>(southOfSymbol);
-	public Symbol northOfSymbol = Symbol.of("NorthOf", 2);
-	public AnySymbolView northOfView = new KeyOnlyView<>(northOfSymbol);
-	public Symbol westOfSymbol = Symbol.of("WestOf", 2);
-	public AnySymbolView westOfView = new KeyOnlyView<>(westOfSymbol);
-	public Symbol eastOfSymbol = Symbol.of("EastOf", 2);
-	public AnySymbolView eastOfView = new KeyOnlyView<>(eastOfSymbol);
-	public Symbol onCellSymbol = Symbol.of("OnCell", 2);
-	public AnySymbolView onCellView = new KeyOnlyView<>(onCellSymbol);
-	public Symbol laneSymbol = Symbol.of("Lane", 1);
-	public Symbol actorSymbol = Symbol.of("Actor", 1);
-	public AnySymbolView actorView = new KeyOnlyView<>(actorSymbol);
-	public Symbol carSymbol = Symbol.of("Car", 1);
-	public Symbol pedestrianSymbol = Symbol.of("Pedestrian", 1);
+	public Symbol<Boolean> cellSymbol = Symbol.of("Cell", 1);
+	public KeyOnlyView<Boolean> cellView = new KeyOnlyView<>(cellSymbol);
+	public Symbol<Boolean> southOfSymbol = Symbol.of("SouthOf", 2);
+	public KeyOnlyView<Boolean> southOfView = new KeyOnlyView<>(southOfSymbol);
+	public Symbol<Boolean> northOfSymbol = Symbol.of("NorthOf", 2);
+	public KeyOnlyView<Boolean> northOfView = new KeyOnlyView<>(northOfSymbol);
+	public Symbol<Boolean> westOfSymbol = Symbol.of("WestOf", 2);
+	public KeyOnlyView<Boolean> westOfView = new KeyOnlyView<>(westOfSymbol);
+	public Symbol<Boolean> eastOfSymbol = Symbol.of("EastOf", 2);
+	public KeyOnlyView<Boolean> eastOfView = new KeyOnlyView<>(eastOfSymbol);
+	public Symbol<Boolean> onCellSymbol = Symbol.of("OnCell", 2);
+	public KeyOnlyView<Boolean> onCellView = new KeyOnlyView<>(onCellSymbol);
+	public Symbol<Boolean> laneSymbol = Symbol.of("Lane", 1);
+	public Symbol<Boolean> actorSymbol = Symbol.of("Actor", 1);
+	public KeyOnlyView<Boolean> actorView = new KeyOnlyView<>(actorSymbol);
+	public Symbol<Boolean> carSymbol = Symbol.of("Car", 1);
+	public Symbol<Boolean> pedestrianSymbol = Symbol.of("Pedestrian", 1);
 	public List<Symbol<Boolean>> symbols = new ArrayList<>();
 	public List<Rule> transformationRules = new ArrayList<>();
-
-	public Symbol dummySymbol = Symbol.of("DummySymbol", 2);
 
 	public TrafficSituationMetaModel(){
 		symbols.add(cellSymbol);
@@ -47,7 +44,6 @@ public final class TrafficSituationMetaModel {
 		symbols.add(actorSymbol);
 		symbols.add(carSymbol);
 		symbols.add(pedestrianSymbol);
-		symbols.add(dummySymbol);
 
 		RelationalQuery neighborhoodPrecondition = Query.of("neighborhoodPrecondition",
 				(builder, c1, c2) -> builder
@@ -71,20 +67,10 @@ public final class TrafficSituationMetaModel {
 				)
 		);
 
-		var dummyRule = Rule.of("DummyRule", (builder, c1, c2) -> builder
-				.clause(
-						cellView.call(c1),
-						cellView.call(c2)
-				)
-				.action(
-						add(dummySymbol, c1, c2)
-				)
-		);
 		transformationRules.add(moveToNeighborRule);
-		transformationRules.add(dummyRule);
 	}
 
-	private final RelationalQuery placedOnCells = Query.of((builder, actor1, cell1, actor2, cell2) -> {
+	private final RelationalQuery placedOnCells = Query.of((builder, actor1, cell1, actor2, cell2) ->
 		builder.clause(
 				actor1.notEquivalent(actor2),
 				actorView.call(actor1),
@@ -93,8 +79,8 @@ public final class TrafficSituationMetaModel {
 				actorView.call(actor2),
 				cellView.call(cell2),
 				onCellView.call(actor2, cell2)
-		);
-	});
+		)
+	);
 
 	public RelationalQuery isInDirection(NodeVariable actor1, NodeVariable actor2, int x, int y) {
 		return Query.of(builder -> {

@@ -1,6 +1,5 @@
 package tools.refinery.store.monitor.internal;
 
-import tools.refinery.store.monitor.internal.timeProviders.AbstractTimeProvider;
 import tools.refinery.store.monitor.ModelMonitorBuilder;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.adapter.AbstractModelAdapterBuilder;
@@ -10,6 +9,7 @@ import tools.refinery.store.model.ModelStoreBuilder;
 import tools.refinery.store.monitor.internal.terms.ClockValueTerm;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.query.ModelQueryBuilder;
+import tools.refinery.store.query.dnf.AnyQuery;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.literal.*;
 import tools.refinery.store.query.term.ConstantTerm;
@@ -20,22 +20,22 @@ import tools.refinery.store.query.view.FunctionView;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import static tools.refinery.store.query.literal.Literals.check;
 import static tools.refinery.store.query.term.int_.IntTerms.*;
 
 public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMonitorStoreAdapterImpl>
 		implements ModelMonitorBuilder{
 
-	private final List<BiConsumer<Model, Integer>> actionSet = new ArrayList<>();
-	private final Set<Query> querySet = new HashSet<>();
+	private final List<Consumer<Model>> actionSet = new ArrayList<>();
+	private final Set<AnyQuery> querySet = new HashSet<>();
 	private Monitor monitor;
-	private AbstractTimeProvider timeProvider;
+	private Symbol<Integer> clockSymbol;
 
 
 	@Override
 	protected ModelMonitorStoreAdapterImpl doBuild(ModelStore store) {
-		return new ModelMonitorStoreAdapterImpl(store, timeProvider, actionSet, monitor);
+		return new ModelMonitorStoreAdapterImpl(store, actionSet, monitor, clockSymbol);
 	}
 
 	@Override
@@ -46,9 +46,9 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 	}
 
 	@Override
-	public ModelMonitorBuilder timeProvider(AbstractTimeProvider timeProvider) {
+	public ModelMonitorBuilder clock(Symbol<Integer> clockSymbol) {
 		checkNotConfigured();
-		this.timeProvider = timeProvider;
+		this.clockSymbol = clockSymbol;
 		return this;
 	}
 
@@ -63,17 +63,6 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 	protected void doConfigure(ModelStoreBuilder storeBuilder) {
 		storeBuilder.symbols(monitor.symbolList);
 		storeBuilder.symbol(monitor.fitnessSymbol);
-
-		if (timeProvider != null){
-			BiConsumer<Model, Integer> refreshTimeAction = (model, now) -> {
-				var clockInterpretation = model.getInterpretation(timeProvider.clockSymbol);
-				clockInterpretation.put(Tuple.of(), now);
-				var queryEngine = model.getAdapter(ModelQueryAdapter.class);
-				queryEngine.flushChanges();
-			};
-			actionSet.add(refreshTimeAction);
-			storeBuilder.symbols(timeProvider.clockSymbol);
-		}
 
 		for (Transition t : monitor.stateMachine.transitions) {
 			for(List<NodeVariable> fromParamList : monitor.get(t.from).keySet()){
@@ -102,7 +91,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 					}
 
 					if(t.guard.timeConstraints.length != 0){
-						var clockView = new FunctionView<>(timeProvider.clockSymbol);
+						var clockView = new FunctionView<>(clockSymbol);
 						DataVariable<Integer> now = Variable.of("now", Integer.class);
 						literals.add(clockView.call(CallPolarity.POSITIVE, List.of(now)));
 
@@ -130,23 +119,36 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 				}
 				Symbol<ClockHolder> toStateSymbol = monitor.get(t.to, toParamList).symbol;
 
-				BiConsumer<Model, Integer> action = (model, now) -> {
+				Consumer<Model> action = (model) -> {
 					var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 					var cursor = queryEngine.getResultSet(query).getAll();
 					var fromStateInterpretation = model.getInterpretation(fromStateSymbol);
 					var toStateInterpretation = model.getInterpretation(toStateSymbol);
 
+					int now = 0;
+					if(clockSymbol != null){
+						var clockInterpretation = model.getInterpretation(clockSymbol);
+						now = clockInterpretation.get(Tuple.of());
+					}
+
 					while(cursor.move()){
 						Tuple res = cursor.getKey();
-						int[] fromTupleArray = new int[fromStateSymbol.arity()];
-						for (int i = 0; i < fromStateSymbol.arity(); i++){
-							fromTupleArray[i] = res.get(i);
+						// We keep the default start state
+						if(fromStateSymbol != monitor.getStartSymbol().symbol){
+							int[] fromTupleArray = new int[fromStateSymbol.arity()];
+							for (int i = 0; i < fromStateSymbol.arity(); i++){
+								fromTupleArray[i] = res.get(i);
+							}
+							Tuple fromTuple = Tuple.of(fromTupleArray);
+							fromStateInterpretation.put(fromTuple, fromStateSymbol.defaultValue());
 						}
-						Tuple fromTuple = Tuple.of(fromTupleArray);
-						fromStateInterpretation.put(fromTuple, null);
-						ClockHolder clockHolder = new ClockHolder(cursor.getValue());
-						clockHolder.reset(t.action.clocksToReset, now);
-						if (t.to.type != State.Type.TRAP) {
+						// The token has to disappear if the next state is a trap state or
+						// the token binding is already present in a direct neighbor of the default start state
+						if (t.to.type != State.Type.TRAP &&
+								!(fromStateSymbol == monitor.getStartSymbol().symbol
+										&& toStateInterpretation.get(res) != toStateSymbol.defaultValue())) {
+							ClockHolder clockHolder = new ClockHolder(cursor.getValue());
+							clockHolder.reset(t.action.clocksToReset, now);
 							toStateInterpretation.put(res, clockHolder);
 						}
 					}
@@ -155,28 +157,27 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 			}
 		}
 
-		BiConsumer<Model, Integer> flushAction = (model, now) -> {
+		Consumer<Model> flushAction = (model) -> {
 			var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 			queryEngine.flushChanges();
 		};
 		actionSet.add(flushAction);
 
-		BiConsumer<Model, Integer> fitnessActon = (model, now) -> {
+		Consumer<Model> fitnessActon = (model) -> {
 			var queryEngine = model.getAdapter(ModelQueryAdapter.class);
-			double minWeight = Double.MAX_VALUE;
+			double weightSum = 0;
 
 			for(State s : monitor.stateMachine.states) {
 				for(var entry : monitor.get(s).entrySet()) {
 					var resultSet = queryEngine.getResultSet(entry.getValue().query);
-					if(resultSet.size() != 0 && minWeight > s.weight) {
-						minWeight = s.weight;
-					}
+					weightSum += resultSet.size() * s.weight;
 				}
 			}
 			var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
-			fitnessInterpretation.put(Tuple.of(), minWeight);
+			fitnessInterpretation.put(Tuple.of(), 1 / (weightSum + 1));
 		};
 		actionSet.add(fitnessActon);
+		actionSet.add(flushAction);
 
 		var queryBuilder = storeBuilder.getAdapter(ModelQueryBuilder.class);
 		queryBuilder.queries(querySet);

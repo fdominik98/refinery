@@ -56,10 +56,6 @@ public class ModelVisualizerAdapterImpl implements ModelVisualizerAdapter {
 
 		this.allInterpretations = new HashMap<>();
 		for (var symbol : storeAdapter.getStore().getSymbols()) {
-			var arity = symbol.arity();
-			if (arity < 1 || arity > 2) {
-				continue;
-			}
 			var interpretation = (Interpretation<?>) model.getInterpretation(symbol);
 			allInterpretations.put(symbol, interpretation);
 		}
@@ -110,7 +106,10 @@ public class ModelVisualizerAdapterImpl implements ModelVisualizerAdapter {
 			var key = entry.getKey();
 			var arity = key.arity();
 			var cursor = entry.getValue().getAll();
-			if (arity == 1) {
+			if (arity == 0) {
+				unaryTupleToInterpretationsMap.computeIfAbsent(Tuple.of(), k -> new LinkedHashSet<>())
+						.add(entry.getValue());
+			} else if (arity == 1 || arity > 2) {
 				while (cursor.move()) {
 					unaryTupleToInterpretationsMap.computeIfAbsent(cursor.getKey(), k -> new LinkedHashSet<>())
 							.add(entry.getValue());
@@ -139,7 +138,7 @@ public class ModelVisualizerAdapterImpl implements ModelVisualizerAdapter {
 		var tableStyle =  " CELLSPACING=\"0\" BORDER=\"2\" CELLBORDER=\"0\" CELLPADDING=\"4\" STYLE=\"ROUNDED\"";
 
 		var key = entry.getKey();
-		var id = key.get(0);
+		var id = tupleToId(key);
 		var mainLabel = String.valueOf(id);
 		var interpretations = entry.getValue();
 		var backgroundColor = toBackgroundColorString(averageColor(interpretations));
@@ -211,6 +210,21 @@ public class ModelVisualizerAdapterImpl implements ModelVisualizerAdapter {
 				.append("\n\tlabel=\"").append(name)
 				.append("\"]\n");
 		return sb.toString();
+	}
+
+	private String tupleToId(Tuple tuple) {
+		var id = "variables";
+		if(tuple.getSize() == 1) {
+			id = String.valueOf(tuple.get(0));
+		}
+		else if(tuple.getSize() > 1){
+			id = "relation";
+			for (var i = 0; i < tuple.getSize(); i++) {
+				id += "_";
+				id += String.valueOf(tuple.get(i));
+			}
+		}
+		return id;
 	}
 
 	private String toBackgroundColorString(Integer[] backgroundColor) {

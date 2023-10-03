@@ -36,4 +36,9 @@ public class ClockHolder{
 			}
 		}
 	}
+
+	@Override
+	public String toString() {
+		return clocks.toString();
+	}
 }

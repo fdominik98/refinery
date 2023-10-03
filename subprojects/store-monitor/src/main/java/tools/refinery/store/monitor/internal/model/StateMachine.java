@@ -15,7 +15,7 @@ public class StateMachine {
 	}
 
 	public StateMachine() {
-		this.startState = this.createState(State.Type.START, 0);
+		this.startState = this.createState(State.Type.START);
 	}
 
 	public State createState() {
@@ -40,9 +40,6 @@ public class StateMachine {
 	}
 
 	public Transition createTransition(State from, Guard guard, State to, ClockResetAction action) {
-		for (Clock c : action.clocksToReset) {
-			clockHolder.put(c, 0);
-		}
 		return createTransitionImpl(from, guard, to, action);
 	}
 
@@ -55,6 +52,12 @@ public class StateMachine {
 		from.addOutTransition(t);
 		to.addInTransition(t);
 		this.transitions.add(t);
+		for (Clock c : action.clocksToReset) {
+			clockHolder.put(c, 0);
+		}
+		for (TimeConstraint tc : guard.timeConstraints) {
+			clockHolder.put(tc.clock, 0);
+		}
 		return t;
 	}
 }

@@ -9,14 +9,14 @@ public final class TrafficSituationInitializer {
 	public final Tuple[][] grid;
 	public final Tuple actor1;
 	public final Tuple actor2;
-	public final Interpretation actorInterpretation;
-	public final Interpretation carInterpretation;
-	public final Interpretation onCellInterpretation;
-	public final Interpretation cellInterpretation;
-	public final Interpretation eastOfInterpretation;
-	public final Interpretation southOfInterpretation;
-	public final Interpretation westOfInterpretation;
-	public final Interpretation northOfInterpretation;
+	public final Interpretation<Boolean> actorInterpretation;
+	public final Interpretation<Boolean> carInterpretation;
+	public final Interpretation<Boolean> onCellInterpretation;
+	public final Interpretation<Boolean> cellInterpretation;
+	public final Interpretation<Boolean> eastOfInterpretation;
+	public final Interpretation<Boolean> southOfInterpretation;
+	public final Interpretation<Boolean> westOfInterpretation;
+	public final Interpretation<Boolean> northOfInterpretation;
 
 	public TrafficSituationInitializer(Model model, TrafficSituationMetaModel metaModel,
 									   int X, int Y) {

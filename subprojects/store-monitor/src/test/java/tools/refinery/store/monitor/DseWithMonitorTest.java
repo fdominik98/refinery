@@ -16,12 +16,17 @@ import tools.refinery.store.monitor.gestureRecognitionCaseStudy.GestureRecogniti
 import tools.refinery.store.monitor.internal.StateMachineTraversal;
 import tools.refinery.store.monitor.internal.objectives.MonitorBasedCriteria;
 import tools.refinery.store.monitor.internal.objectives.MonitorBasedObjective;
+import tools.refinery.store.monitor.senderReceiverCaseStudy.SenderReceiverInitializer;
+import tools.refinery.store.monitor.senderReceiverCaseStudy.SenderReceiverMetaModel;
+import tools.refinery.store.monitor.senderReceiverCaseStudy.SenderReceiverAutomaton;
 import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationInitializer;
 import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationAutomaton;
 import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationMetaModel;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.query.interpreter.QueryInterpreterAdapter;
+import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.statecoding.StateCoderAdapter;
+import tools.refinery.store.tuple.Tuple;
 import tools.refinery.visualization.ModelVisualizerAdapter;
 import tools.refinery.visualization.internal.FileFormat;
 
@@ -59,8 +64,11 @@ class DseWithMonitorTest {
 
 		var model = store.createEmptyModel();
 		var queryEngine = model.getAdapter(ModelQueryAdapter.class);
+		var monitorAdapter = model.getAdapter(ModelMonitorAdapter.class);
 
 		new TrafficSituationInitializer(model,	metaModel, 2, 5);
+		monitorAdapter.init();
+
 		var initialVersion = model.commit();
 		queryEngine.flushChanges();
 
@@ -103,8 +111,62 @@ class DseWithMonitorTest {
 
 		var model = store.createEmptyModel();
 		var queryEngine = model.getAdapter(ModelQueryAdapter.class);
+		var monitorAdapter = model.getAdapter(ModelMonitorAdapter.class);
 
 		new GestureRecognitionInitializer(model, metaModel);
+		monitorAdapter.init();
+		var initialVersion = model.commit();
+		queryEngine.flushChanges();
+
+		var bestFirst = new BestFirstStoreManager(store, 50);
+		bestFirst.startExploration(initialVersion);
+		var resultStore = bestFirst.getSolutionStore();
+		System.out.println("states size: " + resultStore.getSolutions().size());
+		model.getAdapter(ModelVisualizerAdapter.class).visualize(bestFirst.getVisualizationStore());
+	}
+
+	@Test
+		//@Disabled("This test is only for debugging purposes")
+	void SenderReceiverTest() {
+		Symbol<Integer> clockSymbol = Symbol.of("Clock", 0, Integer.class);
+		var metaModel = new SenderReceiverMetaModel(clockSymbol);
+		var stateMachine = new SenderReceiverAutomaton(metaModel).stateMachine;
+		StateMachineTraversal traverser = new StateMachineTraversal(stateMachine);
+
+		var store = ModelStore.builder()
+				.symbols(metaModel.symbols)
+				.symbol(clockSymbol)
+				.with(StateCoderAdapter.builder())
+				.with(ModificationAdapter.builder())
+				.with(QueryInterpreterAdapter.builder())
+				.with(ModelMonitorAdapter.builder()
+						.monitor(traverser.monitor)
+						.clock(clockSymbol)
+						.withStateQueries())
+				.with(ModelVisualizerAdapter.builder()
+						.withOutputPath("sender_receiver_test_output")
+						.withFormat(FileFormat.SVG)
+						.withFormat(FileFormat.DOT)
+						.saveStates()
+						.saveDesignSpace()
+				)
+				.with(DesignSpaceExplorationAdapter.builder()
+						.transformations(metaModel.transformationRules)
+						.exclude(new MonitorBasedCriteria(traverser.monitor, true))
+						.accept(new MonitorBasedCriteria(traverser.monitor, false))
+						.objective(new MonitorBasedObjective(traverser.monitor))
+				)
+				.build();
+
+		var model = store.createEmptyModel();
+		var queryEngine = model.getAdapter(ModelQueryAdapter.class);
+		var monitorAdapter = model.getAdapter(ModelMonitorAdapter.class);
+
+		var clockInterpretation = model.getInterpretation(clockSymbol);
+		clockInterpretation.put(Tuple.of(), 0);
+
+		new SenderReceiverInitializer(model, metaModel);
+		monitorAdapter.init();
 		var initialVersion = model.commit();
 		queryEngine.flushChanges();
 

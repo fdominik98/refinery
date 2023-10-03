@@ -5,11 +5,11 @@ import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.tuple.Tuple;
 public final class GestureRecognitionInitializer {
-	public final Interpretation bodyInterpretation;
-	public final Interpretation headInterpretation;
-	public final Interpretation rightHandInterpretation;
-	public final Interpretation rightShoulderInterpretation;
-	public final Interpretation rightElbowInterpretation;
+	public final Interpretation<Boolean> bodyInterpretation;
+	public final Interpretation<GestureRecognitionMetaModel.Vector> headInterpretation;
+	public final Interpretation<GestureRecognitionMetaModel.Vector> rightHandInterpretation;
+	public final Interpretation<GestureRecognitionMetaModel.Vector> rightShoulderInterpretation;
+	public final Interpretation<GestureRecognitionMetaModel.Vector> rightElbowInterpretation;
 
 	public final Tuple body;
 	public final Tuple rightHand;

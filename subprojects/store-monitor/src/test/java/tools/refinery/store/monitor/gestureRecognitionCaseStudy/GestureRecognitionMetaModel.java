@@ -1,7 +1,7 @@
 package tools.refinery.store.monitor.gestureRecognitionCaseStudy;
 
 import tools.refinery.store.dse.transition.Rule;
-import tools.refinery.store.monitor.gestureRecognitionCaseStudy.actions.IncreaseVectorActionLiteral;
+import tools.refinery.store.monitor.actions.IncreaseVectorActionLiteral;
 import tools.refinery.store.monitor.utils.VectorYTerm;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.dnf.RelationalQuery;
@@ -16,8 +16,7 @@ import tools.refinery.store.representation.Symbol;
 import java.util.ArrayList;
 import java.util.List;
 
-import static tools.refinery.store.dse.transition.actions.ActionLiterals.put;
-import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
+import static tools.refinery.store.dse.transition.actions.ActionLiterals.*;
 import static tools.refinery.store.query.literal.Literals.check;
 import static tools.refinery.store.query.term.int_.IntTerms.*;
 
@@ -34,21 +33,21 @@ public class GestureRecognitionMetaModel {
 		}
 	}
 
-	public Symbol bodySymbol = Symbol.of("Body", 1);
+	public Symbol<Boolean> bodySymbol = Symbol.of("Body", 1);
 	public AnySymbolView bodyView = new KeyOnlyView<>(bodySymbol);
-	public Symbol rightHandSymbol = Symbol.of("RightHand",2, Vector.class);
+	public Symbol<Vector> rightHandSymbol = Symbol.of("RightHand",2, Vector.class);
 	public AnySymbolView rightHandView = new FunctionView<>(rightHandSymbol);
-	public Symbol rightElbowSymbol = Symbol.of("RightElbow",2, Vector.class);
+	public Symbol<Vector> rightElbowSymbol = Symbol.of("RightElbow",2, Vector.class);
 	public AnySymbolView rightElbowView = new FunctionView<>(rightElbowSymbol);
-	public Symbol rightShoulderSymbol = Symbol.of("RightShoulder",2, Vector.class);
+	public Symbol<Vector> rightShoulderSymbol = Symbol.of("RightShoulder",2, Vector.class);
 	public AnySymbolView rightShoulderView = new FunctionView<>(rightShoulderSymbol);
-	public Symbol headSymbol = Symbol.of("Head",2, Vector.class);
+	public Symbol<Vector> headSymbol = Symbol.of("Head",2, Vector.class);
 	public AnySymbolView headView = new FunctionView<>(headSymbol);
 
-	public Symbol handMovedUpSymbol = Symbol.of("HandMovedUp", 2);
-	public AnySymbolView handMovedUpView = new FunctionView<>(handMovedUpSymbol);
+	public Symbol<Boolean> handMovedUpSymbol = Symbol.of("HandMovedUp", 2);
+	public AnySymbolView handMovedUpView = new KeyOnlyView<>(handMovedUpSymbol);
 
-	public List<Symbol<Boolean>> symbols = new ArrayList<>();
+	public List<Symbol<?>> symbols = new ArrayList<>();
 	public List<Rule> transformationRules = new ArrayList<>();
 
 	private RelationalQuery handCondition(boolean lift) {
@@ -136,7 +135,7 @@ public class GestureRecognitionMetaModel {
 			builder.clause(handCondition(true).call(body, hand))
 					.action(
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
-							put(handMovedUpSymbol, body, hand)
+							add(handMovedUpSymbol, body, hand)
 					);
 		});
 		var moveElbowDownRule = Rule.of("MoveElbowDownRule", (builder, body, elbow, hand) -> {
@@ -152,7 +151,7 @@ public class GestureRecognitionMetaModel {
 					.action(
 							new IncreaseVectorActionLiteral(rightElbowSymbol, List.of(body, elbow), Vector.of(0, 1)),
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
-							put(handMovedUpSymbol, body, hand)
+							add(handMovedUpSymbol, body, hand)
 					);
 		});
 
@@ -183,7 +182,7 @@ public class GestureRecognitionMetaModel {
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
 							new IncreaseVectorActionLiteral(rightShoulderSymbol,
 									List.of(body, shoulder), Vector.of(0,1)),
-							put(handMovedUpSymbol, body, hand)
+							add(handMovedUpSymbol, body, hand)
 					);
 		});
 
@@ -197,6 +196,7 @@ public class GestureRecognitionMetaModel {
 
 	public RelationalQuery rightHandAboveHead(NodeVariable body){
 		return Query.of((builder) -> {
+			builder.parameter(body);
 			var rightHand = Variable.of();
 			var head = Variable.of();
 			DataVariable<Vector> rightHandVector = Variable.of(Vector.class);
@@ -215,6 +215,7 @@ public class GestureRecognitionMetaModel {
 
 	public RelationalQuery stretchedRightArm(NodeVariable body) {
 		return Query.of((builder) -> {
+			builder.parameter(body);
 			var rightHand = Variable.of();
 			var rightElbow = Variable.of();
 			var rightShoulder = Variable.of();
@@ -238,6 +239,7 @@ public class GestureRecognitionMetaModel {
 
 	public RelationalQuery rightHandMovedUp(NodeVariable body){
 		return Query.of((builder) -> {
+			builder.parameter(body);
 			var rightHand = Variable.of();
 			DataVariable<Vector> rightHandVector = Variable.of(Vector.class);
 			builder.clause(
@@ -250,8 +252,19 @@ public class GestureRecognitionMetaModel {
 
 	public RelationalQuery stretchedRightArmAndMovedDown(NodeVariable body){
 		return Query.of((builder) -> {
+			builder.parameter(body);
 			builder.clause(
 					rightHandMovedUp(body).call(CallPolarity.NEGATIVE, body),
+					stretchedRightArm(body).call(body)
+			);
+		});
+	}
+
+	public RelationalQuery stretchedRightArmAndMovedUp(NodeVariable body){
+		return Query.of((builder) -> {
+			builder.parameter(body);
+			builder.clause(
+					rightHandMovedUp(body).call(body),
 					stretchedRightArm(body).call(body)
 			);
 		});

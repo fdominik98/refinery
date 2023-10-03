@@ -10,7 +10,6 @@ import tools.refinery.store.dse.modification.ModificationAdapter;
 import tools.refinery.store.monitor.internal.StateMachineTraversal;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.model.ModelStore;
-import tools.refinery.store.monitor.internal.timeProviders.TimeProviderMock;
 import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationInitializer;
 import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationAutomaton;
 import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationMetaModel;
@@ -27,9 +26,9 @@ import static tools.refinery.store.monitor.utils.QueryAssertions.assertResults;
 
 class AdapterTest {
 	private static final Symbol<Boolean> actor = Symbol.of("Actor", 1);
-	private static final KeyOnlyView actorView = new KeyOnlyView<>(actor);
+	private static final KeyOnlyView<Boolean> actorView = new KeyOnlyView<>(actor);
 	private static final Symbol<Boolean> hasBehind = Symbol.of("HasBehind", 2);
-	private static final KeyOnlyView hasBehindView = new KeyOnlyView<>(hasBehind);
+	private static final KeyOnlyView<Boolean> hasBehindView = new KeyOnlyView<>(hasBehind);
 
 	@Test
 	void TestTimedStateMachine() {
@@ -42,9 +41,6 @@ class AdapterTest {
 		var c2 = Variable.of("c2");
 		var a1 = Variable.of("a1");
 		Clock clock1 = new Clock("clock1");
-
-		TimeProviderMock timeProvider = new TimeProviderMock();
-
 
 		var guard1 = Guard.of(Query.of(builder -> {
 			builder.parameters(c1, c2);
@@ -66,36 +62,43 @@ class AdapterTest {
 
 		StateMachineTraversal traverser = new StateMachineTraversal(sm);
 
+		Symbol<Integer> clockSymbol = Symbol.of("Clock", 0, Integer.class);
+
 		var store = ModelStore.builder()
-				.symbols(hasBehind, actor)
+				.symbols(hasBehind, actor, clockSymbol)
 				.with(QueryInterpreterAdapter.builder())
 				.with(ModelMonitorAdapter.builder()
 						.monitor(traverser.monitor)
-						.timeProvider(timeProvider)
+						.clock(clockSymbol)
 						.withStateQueries())
 				.build();
 
 		var model = store.createEmptyModel();
 		var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 
-		var monitor = model.getAdapter(ModelMonitorAdapter.class);
-		var stateSymbols = monitor.getMonitor();
+		var monitorAdapter = model.getAdapter(ModelMonitorAdapter.class);
+		var monitor = monitorAdapter.getMonitor();
 
 		var actorInterpretation = model.getInterpretation(actor);
 		var hasBehindInterpretation = model.getInterpretation(hasBehind);
+		var clockInterpretation = model.getInterpretation(clockSymbol);
 
-		var inState2Results = queryEngine.getResultSet(stateSymbols.get(s2, List.of(c1, c2)).query);
-		var inState1Results = queryEngine.getResultSet(stateSymbols.get(sm.startState, List.of()).query);
+		var inState2Results = queryEngine.getResultSet(monitor.get(s2, List.of(c1, c2)).query);
+		var inState1Results = queryEngine.getResultSet(monitor.get(sm.startState, List.of()).query);
 		var inState1Results2 =
-				queryEngine.getResultSet(stateSymbols.get(sm.startState, List.of(c1, c2, a1)).query);
-		var inState3Results = queryEngine.getResultSet(stateSymbols.get(s3, List.of(c1, c2)).query);
-		var inState3Results2 = queryEngine.getResultSet(stateSymbols.get(s3, List.of(c1, c2, a1)).query);
+				queryEngine.getResultSet(monitor.get(sm.startState, List.of(c1, c2, a1)).query);
+		var inState3Results = queryEngine.getResultSet(monitor.get(s3, List.of(c1, c2)).query);
+		var inState3Results2 = queryEngine.getResultSet(monitor.get(s3, List.of(c1, c2, a1)).query);
 
 		// Init model
+		clockInterpretation.put(Tuple.of(), 0);
 		hasBehindInterpretation.put(Tuple.of(0, 2), true);
 		queryEngine.flushChanges();
 
-		timeProvider.stepTime(4);
+		monitorAdapter.init();
+
+		clockInterpretation.put(Tuple.of(), 4);
+		monitorAdapter.refreshStates();
 
 		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState2Results);
@@ -107,9 +110,10 @@ class AdapterTest {
 				Tuple.of(0, 2, 0), false,
 				Tuple.of(0, 2, 1), false), inState1Results2);
 
-		timeProvider.stepTime(1);
+		clockInterpretation.put(Tuple.of(), 5);
+		monitorAdapter.refreshStates();
 
-		assertResults(Map.of(Tuple.of(), false), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(Tuple.of(0, 2), true), inState2Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState3Results);
 		assertResults(Map.of(
@@ -124,9 +128,10 @@ class AdapterTest {
 		hasBehindInterpretation.put(Tuple.of(0, 2), false);
 		queryEngine.flushChanges();
 
-		timeProvider.stepTime(1);
+		clockInterpretation.put(Tuple.of(), 6);
+		monitorAdapter.refreshStates();
 
-		assertResults(Map.of(Tuple.of(), false), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState2Results);
 		assertResults(Map.of(Tuple.of(0, 2), true), inState3Results);
 		assertResults(Map.of(
@@ -136,9 +141,10 @@ class AdapterTest {
 				Tuple.of(0, 2, 0), true,
 				Tuple.of(0, 2, 1), true), inState1Results2);
 
-		timeProvider.stepTime(5);
+		clockInterpretation.put(Tuple.of(), 11);
+		monitorAdapter.refreshStates();
 
-		assertResults(Map.of(Tuple.of(), false), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState2Results);
 		assertResults(Map.of(Tuple.of(0, 2), true), inState3Results);
 		assertResults(Map.of(
@@ -167,19 +173,20 @@ class AdapterTest {
 		var model = store.createEmptyModel();
 		var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 
-		var monitor = model.getAdapter(ModelMonitorAdapter.class);
-		var stateSymbols = monitor.getMonitor();
+		var monitorAdapter = model.getAdapter(ModelMonitorAdapter.class);
+		var monitor = monitorAdapter.getMonitor();
 
-		var inState1Results = queryEngine.getResultSet(stateSymbols.get(scenario.s1, List.of()).query);
-		var inState2Results = queryEngine.getResultSet(stateSymbols.get(scenario.s2, List.of(scenario.a1,
+		var inState1Results = queryEngine.getResultSet(monitor.get(scenario.s1, List.of()).query);
+		var inState2Results = queryEngine.getResultSet(monitor.get(scenario.s2, List.of(scenario.a1,
 				scenario.a2)).query);
-		var inState3Results = queryEngine.getResultSet(stateSymbols.get(scenario.s3,
+		var inState3Results = queryEngine.getResultSet(monitor.get(scenario.s3,
 				List.of(scenario.a1, scenario.a2)).query);
-		var inState4Results = queryEngine.getResultSet(stateSymbols.get(scenario.s4, List.of(scenario.a1,
+		var inState4Results = queryEngine.getResultSet(monitor.get(scenario.s4, List.of(scenario.a1,
 				scenario.a2)).query);
 
 		// Init model
 		TrafficSituationInitializer initializer = new TrafficSituationInitializer(model, metaModel, 2,	5);
+		monitorAdapter.init();
 
 		Tuple actors = Tuple.of(initializer.actor1.get(0), initializer.actor2.get(0));
 
@@ -192,7 +199,7 @@ class AdapterTest {
 
 		model.commit();
 
-		assertResults(Map.of(Tuple.of(), false), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(actors, true), inState2Results);
 		assertResults(Map.of(actors, false), inState3Results);
 		assertResults(Map.of(actors, false), inState4Results);
@@ -203,7 +210,7 @@ class AdapterTest {
 		queryEngine.flushChanges();
 		model.commit();
 
-		assertResults(Map.of(Tuple.of(), false), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(actors, false), inState2Results);
 		assertResults(Map.of(actors, true), inState3Results);
 		assertResults(Map.of(actors, false), inState4Results);
@@ -214,7 +221,7 @@ class AdapterTest {
 		queryEngine.flushChanges();
 		model.commit();
 
-		assertResults(Map.of(Tuple.of(), false), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(actors, false), inState2Results);
 		assertResults(Map.of(actors, false), inState3Results);
 		assertResults(Map.of(actors, true), inState4Results);

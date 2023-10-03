@@ -3,26 +3,26 @@ package tools.refinery.store.monitor.internal;
 import tools.refinery.store.adapter.ModelAdapter;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.model.ModelStore;
-import tools.refinery.store.monitor.internal.timeProviders.AbstractTimeProvider;
 import tools.refinery.store.monitor.ModelMonitorStoreAdapter;
 import tools.refinery.store.monitor.internal.model.Monitor;
+import tools.refinery.store.representation.Symbol;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class ModelMonitorStoreAdapterImpl implements ModelMonitorStoreAdapter {
 
 	private final ModelStore store;
-	private final List<BiConsumer<Model, Integer>> actionSet;
+	private final List<Consumer<Model>> actionSet;
 	private final Monitor monitor;
-	private final AbstractTimeProvider timeProvider;
+	private final Symbol<Integer> clockSymbol;
 
-	ModelMonitorStoreAdapterImpl(ModelStore store, AbstractTimeProvider timeProvider,
-								 List<BiConsumer<Model, Integer>> actionSet, Monitor monitor) {
+	ModelMonitorStoreAdapterImpl(ModelStore store, List<Consumer<Model>> actionSet,
+								 Monitor monitor, Symbol<Integer> clockSymbol) {
 		this.store = store;
 		this.actionSet = actionSet;
 		this.monitor = monitor;
-		this.timeProvider = timeProvider;
+		this.clockSymbol = clockSymbol;
 	}
 	@Override
 	public ModelStore getStore() {
@@ -30,12 +30,12 @@ public class ModelMonitorStoreAdapterImpl implements ModelMonitorStoreAdapter {
 	}
 
 	@Override
-	public Collection<BiConsumer<Model, Integer>> getActions() {
+	public Collection<Consumer<Model>> getActions() {
 		return actionSet;
 	}
 
 	@Override
 	public ModelAdapter createModelAdapter(Model model) {
-		return new ModelMonitorAdapterImpl(model, this, timeProvider, monitor);
+		return new ModelMonitorAdapterImpl(model, this, monitor, clockSymbol);
 	}
 }

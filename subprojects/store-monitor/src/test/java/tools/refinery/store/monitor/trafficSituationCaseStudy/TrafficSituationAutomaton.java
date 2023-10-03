@@ -18,9 +18,9 @@ public class TrafficSituationAutomaton {
 
 	public TrafficSituationAutomaton(TrafficSituationMetaModel metaModel) {
 		s2 = stateMachine.createState(2);
-		s3 = stateMachine.createState(1);
-		s4 = stateMachine.createState(State.Type.ACCEPT, 0);
-		s5 = stateMachine.createState(State.Type.TRAP, 100);
+		s3 = stateMachine.createState(5);
+		s4 = stateMachine.createState(State.Type.ACCEPT, 10);
+		s5 = stateMachine.createState(State.Type.TRAP);
 
 		a1 =  NodeVariable.of("a1");
 		a2 =  NodeVariable.of("a2");

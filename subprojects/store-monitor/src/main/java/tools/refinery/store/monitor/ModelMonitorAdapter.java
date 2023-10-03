@@ -9,4 +9,6 @@ public interface ModelMonitorAdapter extends ModelAdapter {
 		return new ModelMonitorBuilderImpl();
 	}
 	Monitor getMonitor();
+	void init();
+	void refreshStates();
 }

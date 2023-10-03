@@ -1,9 +1,8 @@
-package tools.refinery.store.monitor.gestureRecognitionCaseStudy.actions;
+package tools.refinery.store.monitor.actions;
 
 import tools.refinery.store.dse.transition.actions.ActionLiteral;
 import tools.refinery.store.dse.transition.actions.BoundActionLiteral;
 import tools.refinery.store.model.Model;
-import tools.refinery.store.monitor.gestureRecognitionCaseStudy.GestureRecognitionMetaModel;
 import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
@@ -11,19 +10,18 @@ import tools.refinery.store.tuple.Tuple;
 import java.util.List;
 
 
-public class IncreaseVectorActionLiteral implements ActionLiteral {
-	private final GestureRecognitionMetaModel.Vector incVector;
-	private final Symbol<GestureRecognitionMetaModel.Vector> symbol;
+public class IncreaseIntegerActionLiteral implements ActionLiteral {
+	private final int incInteger;
+	private final Symbol<Integer> symbol;
 	private final List<NodeVariable> parameters;
 
-	public IncreaseVectorActionLiteral(Symbol<GestureRecognitionMetaModel.Vector> symbol,
-										List<NodeVariable> parameters,
-									   	GestureRecognitionMetaModel.Vector incVector) {
+	public IncreaseIntegerActionLiteral(Symbol<Integer> symbol,
+                                        List<NodeVariable> parameters, int incInteger) {
 		if (symbol.arity() != parameters.size()) {
 			throw new IllegalArgumentException("Expected %d parameters for symbol %s, got %d instead"
 					.formatted(symbol.arity(), symbol, parameters.size()));
 		}
-		this.incVector = incVector;
+		this.incInteger = incInteger;
 		this.parameters = parameters;
 		this.symbol = symbol;
 	}
@@ -46,9 +44,8 @@ public class IncreaseVectorActionLiteral implements ActionLiteral {
 	public BoundActionLiteral bindToModel(Model model) {
 		var interpretation = model.getInterpretation(symbol);
 		return tuple -> {
-			var vector = interpretation.get(tuple);
-			var newVector = GestureRecognitionMetaModel.Vector.of(vector.x + incVector.x, vector.y + incVector.y);
-			interpretation.put(tuple, newVector);
+			var integer = interpretation.get(tuple);
+			interpretation.put(tuple, integer + incInteger);
 			return Tuple.of();
 		};
 	}
