@@ -21,7 +21,7 @@ public class MonitorBasedCriteria implements Criterion{
 	public CriterionCalculator createCalculator(Model model) {
 		var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
 		return () -> negated ?
-				(fitnessInterpretation.get(Tuple.of()) > monitor.stateMachine.getMaxWeight()) :
-				(fitnessInterpretation.get(Tuple.of()) <= monitor.stateMachine.getMaxWeight());
+				(fitnessInterpretation.get(Tuple.of()) > 1) :
+				(fitnessInterpretation.get(Tuple.of()) <= 1);
 	}
 }

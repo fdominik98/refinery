@@ -20,6 +20,7 @@ include(
 		"store",
 		"store-dse",
 		"store-dse-visualization",
+		"store-dse-evaluation",
 		"store-query",
 		"store-query-interpreter",
 		"store-reasoning",
