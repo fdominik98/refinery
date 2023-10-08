@@ -309,7 +309,7 @@ public class TupleMask {
     public Tuple transform(ITuple original) {
         switch (indices.length) {
         case 0:
-            return FlatTuple0.INSTANCE;
+            return FlatTuple.of();
         case 1:
             return new FlatTuple1(original.get(indices[0]));
         case 2:

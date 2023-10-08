@@ -12,6 +12,7 @@ dependencies {
 	api(project(":refinery-store-query"))
 	implementation(project(":refinery-store-dse-visualization"))
 	implementation(libs.eclipseCollections.api)
-	runtimeOnly(libs.eclipseCollections)
+    implementation(project(mapOf("path" to ":refinery-store-dse-evaluation")))
+    runtimeOnly(libs.eclipseCollections)
 	testImplementation(project(":refinery-store-query-interpreter"))
 }

@@ -13,8 +13,6 @@ import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.statecoding.ObjectCode;
 import tools.refinery.store.tuple.Tuple;
-import tools.refinery.store.tuple.Tuple0;
-
 import java.util.*;
 
 public abstract class AbstractNeighbourhoodCalculator {
@@ -92,7 +90,7 @@ public abstract class AbstractNeighbourhoodCalculator {
 	protected long calculateModelCode(long lastSum) {
 		long result = 0;
 		for (var nullImpactValue : nullImpactValues) {
-			result = result * PRIME + Objects.hashCode(((Interpretation<?>) nullImpactValue).get(Tuple0.INSTANCE));
+			result = result * PRIME + Objects.hashCode(((Interpretation<?>) nullImpactValue).get(Tuple.of()));
 		}
 		result += lastSum;
 		return result;

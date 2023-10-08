@@ -13,7 +13,6 @@ import tools.refinery.store.statecoding.ObjectCode;
 import tools.refinery.store.statecoding.StateCodeCalculator;
 import tools.refinery.store.statecoding.StateCoderResult;
 import tools.refinery.store.tuple.Tuple;
-import tools.refinery.store.tuple.Tuple0;
 
 import java.util.List;
 import java.util.Objects;
@@ -50,7 +49,7 @@ public class NeighbourhoodCalculator extends AbstractNeighbourhoodCalculator imp
 	private long calculateLastSum(ObjectCode codes) {
 		long result = 0;
 		for (var nullImpactValue : nullImpactValues) {
-			result = result * PRIME + Objects.hashCode(((Interpretation<?>) nullImpactValue).get(Tuple0.INSTANCE));
+			result = result * PRIME + Objects.hashCode(((Interpretation<?>) nullImpactValue).get(Tuple.of()));
 		}
 
 		for (int i = 0; i < codes.getSize(); i++) {

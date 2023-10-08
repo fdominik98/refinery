@@ -9,6 +9,7 @@ import tools.refinery.store.map.Cursor;
 import tools.refinery.store.map.Cursors;
 import tools.refinery.store.representation.TruthValue;
 import tools.refinery.store.tuple.Tuple;
+import tools.refinery.store.tuple.Tuple0;
 
 class NullaryMutableSeed implements MutableSeed<TruthValue> {
 	private DecisionTreeValue value;

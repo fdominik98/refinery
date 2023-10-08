@@ -6,6 +6,7 @@
 package tools.refinery.store.dse.strategy;
 
 import org.jetbrains.annotations.Nullable;
+import tools.refinery.evaluation.statespace.EvaluationStore;
 import tools.refinery.store.dse.propagation.PropagationAdapter;
 import tools.refinery.store.dse.transition.DesignSpaceExplorationAdapter;
 import tools.refinery.store.dse.transition.ObjectiveValue;
@@ -28,7 +29,9 @@ public class BestFirstWorker {
 	final ModelQueryAdapter queryAdapter;
 	final @Nullable PropagationAdapter propagationAdapter;
 	final VisualizationStore visualizationStore;
+	final EvaluationStore evaluationStore;
 	final boolean isVisualizationEnabled;
+	final boolean isEvaluationEnabled;
 
 	public BestFirstWorker(BestFirstStoreManager storeManager, Model model) {
 		this.storeManager = storeManager;
@@ -42,6 +45,8 @@ public class BestFirstWorker {
 				explorationAdapter.getTransformations());
 		visualizationStore = storeManager.getVisualizationStore();
 		isVisualizationEnabled = visualizationStore != null;
+		evaluationStore	= storeManager.getEvaluationStore();
+		isEvaluationEnabled =evaluationStore != null;
 	}
 
 	protected VersionWithObjectiveValue last = null;
@@ -144,10 +149,15 @@ public class BestFirstWorker {
 			oldVersion = last.version();
 		}
 		var submitResult = submit();
-		if (isVisualizationEnabled && submitResult.newVersion() != null) {
-			var newVersion = submitResult.newVersion().version();
-			visualizationStore.addTransition(oldVersion, newVersion,
-					visitResult.transformation().getDefinition().getName() + ", " + visitResult.activation());
+		 if ( submitResult.newVersion() != null) {
+			 var newVersion = submitResult.newVersion().version();
+			 if (isVisualizationEnabled) {
+				visualizationStore.addTransition(oldVersion, newVersion,
+					 visitResult.transformation().getDefinition().getName() + ", " + visitResult.activation());
+ 			}
+			if(isEvaluationEnabled) {
+				evaluationStore.addModelVersion(oldVersion, newVersion);
+			}
 		}
 		return new RandomVisitResult(submitResult, visitResult.mayHaveMore());
 	}

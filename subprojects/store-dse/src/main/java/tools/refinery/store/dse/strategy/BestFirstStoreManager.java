@@ -5,6 +5,8 @@
  */
 package tools.refinery.store.dse.strategy;
 
+import tools.refinery.evaluation.statespace.EvaluationStore;
+import tools.refinery.evaluation.statespace.internal.EvaluationStoreImpl;
 import tools.refinery.store.dse.transition.DesignSpaceExplorationStoreAdapter;
 import tools.refinery.store.dse.transition.VersionWithObjectiveValue;
 import tools.refinery.store.dse.transition.statespace.ActivationStore;
@@ -31,6 +33,7 @@ public class BestFirstStoreManager {
 	SolutionStore solutionStore;
 	EquivalenceClassStore equivalenceClassStore;
 	VisualizationStore visualizationStore;
+	EvaluationStore evaluationStore;
 
 	public BestFirstStoreManager(ModelStore modelStore, int maxNumberOfSolutions) {
 		this.modelStore = modelStore;
@@ -49,6 +52,7 @@ public class BestFirstStoreManager {
 			}
 		};
 		visualizationStore = new VisualizationStoreImpl();
+		evaluationStore = new EvaluationStoreImpl();
 	}
 
 	public ModelStore getModelStore() {
@@ -73,6 +77,10 @@ public class BestFirstStoreManager {
 
 	public VisualizationStore getVisualizationStore() {
 		return visualizationStore;
+	}
+
+	public EvaluationStore getEvaluationStore() {
+		return evaluationStore;
 	}
 
 	public void startExploration(Version initial) {

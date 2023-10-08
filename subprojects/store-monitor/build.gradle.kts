@@ -11,7 +11,8 @@ plugins {
 dependencies {
 	implementation("com.google.guava:guava:30.1-jre")
 	api(project(":refinery-store-query"))
-	implementation(project(":refinery-store-dse-visualization"))
+	api(project(":refinery-store-dse-visualization"))
+	api(project(":refinery-store-dse-evaluation"))
 	api(project(":refinery-store-query-interpreter"))
     implementation(project(mapOf("path" to ":refinery-store-dse")))
 }

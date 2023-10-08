@@ -14,7 +14,7 @@ import tools.refinery.store.monitor.gestureRecognitionCaseStudy.GestureRecogniti
 import tools.refinery.store.monitor.gestureRecognitionCaseStudy.GestureRecognitionInitializer;
 import tools.refinery.store.monitor.gestureRecognitionCaseStudy.GestureRecognitionMetaModel;
 import tools.refinery.store.monitor.internal.StateMachineTraversal;
-import tools.refinery.store.monitor.internal.objectives.MonitorBasedCriteria;
+import tools.refinery.store.monitor.internal.objectives.MonitorFitnessCriterion;
 import tools.refinery.store.monitor.internal.objectives.MonitorBasedObjective;
 import tools.refinery.store.monitor.senderReceiverCaseStudy.SenderReceiverInitializer;
 import tools.refinery.store.monitor.senderReceiverCaseStudy.SenderReceiverMetaModel;
@@ -29,6 +29,7 @@ import tools.refinery.store.statecoding.StateCoderAdapter;
 import tools.refinery.store.tuple.Tuple;
 import tools.refinery.visualization.ModelVisualizerAdapter;
 import tools.refinery.visualization.internal.FileFormat;
+import tools.refinery.evaluation.ModelEvaluationAdapter;
 
 class DseWithMonitorTest {
 
@@ -56,8 +57,8 @@ class DseWithMonitorTest {
 				)
 				.with(DesignSpaceExplorationAdapter.builder()
 						.transformations(metaModel.transformationRules)
-						.exclude(new MonitorBasedCriteria(traverser.monitor, true))
-						.accept(new MonitorBasedCriteria(traverser.monitor, false))
+						.exclude(new MonitorFitnessCriterion(traverser.monitor, true))
+						.accept(new MonitorFitnessCriterion(traverser.monitor, false))
 						.objective(new MonitorBasedObjective(traverser.monitor))
 				)
 				.build();
@@ -101,10 +102,11 @@ class DseWithMonitorTest {
 						.saveStates()
 						.saveDesignSpace()
 				)
+				.with(ModelEvaluationAdapter.builder())
 				.with(DesignSpaceExplorationAdapter.builder()
 						.transformations(metaModel.transformationRules)
-						.exclude(new MonitorBasedCriteria(traverser.monitor, true))
-						.accept(new MonitorBasedCriteria(traverser.monitor, false))
+						.exclude(new MonitorFitnessCriterion(traverser.monitor, true))
+						.accept(new MonitorFitnessCriterion(traverser.monitor, false))
 						.objective(new MonitorBasedObjective(traverser.monitor))
 				)
 				.build();
@@ -118,11 +120,15 @@ class DseWithMonitorTest {
 		var initialVersion = model.commit();
 		queryEngine.flushChanges();
 
-		var bestFirst = new BestFirstStoreManager(store, 50);
+		var bestFirst = new BestFirstStoreManager(store, 100);
 		bestFirst.startExploration(initialVersion);
 		var resultStore = bestFirst.getSolutionStore();
 		System.out.println("states size: " + resultStore.getSolutions().size());
 		model.getAdapter(ModelVisualizerAdapter.class).visualize(bestFirst.getVisualizationStore());
+
+		var evaluationStore = bestFirst.getEvaluationStore();
+		double accuracy = model.getAdapter(ModelEvaluationAdapter.class).evaluateAccuracy(evaluationStore,
+				traverser.monitor.acceptedSymbol);
 	}
 
 	@Test
@@ -152,8 +158,8 @@ class DseWithMonitorTest {
 				)
 				.with(DesignSpaceExplorationAdapter.builder()
 						.transformations(metaModel.transformationRules)
-						.exclude(new MonitorBasedCriteria(traverser.monitor, true))
-						.accept(new MonitorBasedCriteria(traverser.monitor, false))
+						.exclude(new MonitorFitnessCriterion(traverser.monitor, true))
+						.accept(new MonitorFitnessCriterion(traverser.monitor, false))
 						.objective(new MonitorBasedObjective(traverser.monitor))
 				)
 				.build();

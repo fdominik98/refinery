@@ -11,11 +11,11 @@ public class StateMachine {
 	private double maxWeight = 0;
 
 	public StateMachine(int startWeight) {
-		this.startState = this.createState(State.Type.START, startWeight);
+		this.startState = this.createState(startWeight);
 	}
 
 	public StateMachine() {
-		this.startState = this.createState(State.Type.START);
+		this.startState = this.createState();
 	}
 
 	public State createState() {

@@ -7,44 +7,44 @@ package tools.refinery.evaluation.statespace.internal;
 
 import tools.refinery.store.map.Version;
 import tools.refinery.evaluation.statespace.EvaluationStore;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EvaluationStoreImpl implements EvaluationStore {
 
-	private final Map<Version, Integer> states = new HashMap<>();
-	private int transitionCounter = 0;
-	private Integer numberOfStates = 0;
-	private final StringBuilder designSpaceBuilder = new StringBuilder();
+	private final List<List<Version>> trajectories = new ArrayList<>();
+
 
 	@Override
-	public synchronized void addState(Version state, String label) {
-		if (states.containsKey(state)) {
-			return;
+	public synchronized void addModelVersion(Version oldVersion, Version newVersion) {
+		if (trajectories.isEmpty()) {
+			trajectories.add(new ArrayList<>(List.of(oldVersion)));
 		}
-		states.put(state, numberOfStates++);
-		designSpaceBuilder.append(states.get(state)).append(" [label = \"").append(states.get(state)).append(" (");
-		designSpaceBuilder.append(label);
-		designSpaceBuilder.append(")\"\n").append("URL=\"./").append(states.get(state)).append(".svg\"]\n");
+
+		List<Version> newTrajectory = null;
+
+		for (List<Version> trajectory : trajectories) {
+			int index = trajectory.indexOf(oldVersion);
+
+			if (index == trajectory.size() - 1) {
+				trajectory.add(newVersion);
+				return;
+			} else if (index != -1) {
+				newTrajectory = new ArrayList<>(trajectory.subList(0, index + 1));
+				newTrajectory.add(newVersion);
+				break;
+			}
+		}
+
+		if (newTrajectory == null) {
+			throw new IllegalArgumentException("No old version found: " + oldVersion);
+		}
+
+		trajectories.add(newTrajectory);
 	}
 
 	@Override
-	public synchronized void addSolution(Version state) {
-		designSpaceBuilder.append(states.get(state)).append(" [peripheries = 2]\n");
-	}
-
-	@Override
-	public synchronized void addTransition(Version from, Version to, String label) {
-		designSpaceBuilder.append(states.get(from)).append(" -> ").append(states.get(to))
-				.append(" [label=\"").append(transitionCounter++).append(": ").append(label).append("\"]\n");
-	}
-
-	public synchronized StringBuilder getDesignSpaceStringBuilder() {
-		return designSpaceBuilder;
-	}
-
-	@Override
-	public Map<Version, Integer> getStates() {
-		return states;
+	public List<List<Version>> getTrajectories() {
+		return trajectories;
 	}
 }

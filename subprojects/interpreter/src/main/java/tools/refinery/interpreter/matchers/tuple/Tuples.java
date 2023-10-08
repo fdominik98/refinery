@@ -37,7 +37,7 @@ public class Tuples {
     public static Tuple flatTupleOf(Object... elements) {
         switch (elements.length) {
         case 0:
-            return FlatTuple0.INSTANCE;
+            return FlatTuple.of();
         case 1:
             return new FlatTuple1(elements[0]);
         case 2:
@@ -86,7 +86,7 @@ public class Tuples {
      * Creates a flat tuple consisting of no elements.
      */
     public static Tuple staticArityFlatTupleOf() {
-        return FlatTuple0.INSTANCE;
+        return FlatTuple.of();
     }
     /**
      * Creates a flat tuple consisting of the given single element.

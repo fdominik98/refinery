@@ -6,7 +6,6 @@ import java.util.List;
 public class State {
 
 	public enum Type {
-		START,
 		INTERMEDIATE,
 		TRAP,
 		ACCEPT
@@ -25,9 +24,6 @@ public class State {
 		this.weight = weight;
 	}
 
-	public boolean isStart() {
-		return type == Type.START;
-	}
 	public boolean isTrap() {
 		return type == Type.TRAP;
 	}
