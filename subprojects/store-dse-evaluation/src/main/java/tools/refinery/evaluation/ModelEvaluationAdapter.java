@@ -10,7 +10,6 @@ import tools.refinery.store.adapter.ModelAdapter;
 import tools.refinery.evaluation.internal.ModelEvaluationBuilderImpl;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.statecoding.neighbourhood.ObjectCodeImpl;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
