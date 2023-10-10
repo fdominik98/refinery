@@ -9,10 +9,13 @@ import tools.refinery.store.map.Version;
 import tools.refinery.evaluation.statespace.EvaluationStore;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class EvaluationStoreImpl implements EvaluationStore {
 
 	private final List<List<Version>> trajectories = new ArrayList<>();
+
+	private Optional<Long> timeSpan = Optional.empty();
 
 
 	@Override
@@ -46,5 +49,18 @@ public class EvaluationStoreImpl implements EvaluationStore {
 	@Override
 	public List<List<Version>> getTrajectories() {
 		return trajectories;
+	}
+
+	@Override
+	public long getTimeSpan() {
+		if (timeSpan.isEmpty()) {
+			throw new IllegalArgumentException("Evaluation is not ready");
+		}
+		return timeSpan.get();
+	}
+
+	@Override
+	public void setTimeSpan(long timeSpan) {
+		this.timeSpan = Optional.of(timeSpan);
 	}
 }

@@ -5,6 +5,7 @@ import tools.refinery.store.dse.transition.objectives.ObjectiveCalculator;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.monitor.internal.model.Monitor;
 import tools.refinery.store.tuple.Tuple;
+import tools.refinery.store.tuple.Tuple0;
 
 public class MonitorBasedObjective implements Objective {
 	private final Monitor monitor;
@@ -16,6 +17,6 @@ public class MonitorBasedObjective implements Objective {
 	@Override
 	public ObjectiveCalculator createCalculator(Model model) {
 		var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
-		return () -> fitnessInterpretation.get(Tuple0.INSTANCE);
+		return () -> fitnessInterpretation.get(Tuple.of());
 	}
 }

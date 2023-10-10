@@ -1,6 +1,10 @@
-package tools.refinery.store.monitor.trafficSituationCaseStudy;
+package tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy;
 
 import tools.refinery.store.dse.transition.Rule;
+import tools.refinery.store.model.Model;
+import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
+import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
+import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.dnf.RelationalQuery;
 import tools.refinery.store.query.literal.Literal;
@@ -12,7 +16,7 @@ import java.util.List;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.add;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
 
-public final class TrafficSituationMetaModel {
+public final class TrafficSituationMetaModel extends MetaModelInstance {
 	public Symbol<Boolean> cellSymbol = Symbol.of("Cell", 1);
 	public KeyOnlyView<Boolean> cellView = new KeyOnlyView<>(cellSymbol);
 	public Symbol<Boolean> southOfSymbol = Symbol.of("SouthOf", 2);
@@ -30,20 +34,20 @@ public final class TrafficSituationMetaModel {
 	public KeyOnlyView<Boolean> actorView = new KeyOnlyView<>(actorSymbol);
 	public Symbol<Boolean> carSymbol = Symbol.of("Car", 1);
 	public Symbol<Boolean> pedestrianSymbol = Symbol.of("Pedestrian", 1);
-	public List<Symbol<Boolean>> symbols = new ArrayList<>();
-	public List<Rule> transformationRules = new ArrayList<>();
 
 	public TrafficSituationMetaModel(){
-		symbols.add(cellSymbol);
-		symbols.add(southOfSymbol);
-		symbols.add(northOfSymbol);
-		symbols.add(westOfSymbol);
-		symbols.add(eastOfSymbol);
-		symbols.add(onCellSymbol);
-		symbols.add(laneSymbol);
-		symbols.add(actorSymbol);
-		symbols.add(carSymbol);
-		symbols.add(pedestrianSymbol);
+		super(null);
+
+		addSymbol(cellSymbol);
+		addSymbol(southOfSymbol);
+		addSymbol(northOfSymbol);
+		addSymbol(westOfSymbol);
+		addSymbol(eastOfSymbol);
+		addSymbol(onCellSymbol);
+		addSymbol(laneSymbol);
+		addSymbol(actorSymbol);
+		addSymbol(carSymbol);
+		addSymbol(pedestrianSymbol);
 
 		RelationalQuery neighborhoodPrecondition = Query.of("neighborhoodPrecondition",
 				(builder, c1, c2) -> builder
@@ -137,5 +141,15 @@ public final class TrafficSituationMetaModel {
 			}
 			builder.clause(literals);
 		});
+	}
+
+	@Override
+	public ModelInitializer createInitializer(Model model) {
+		return new TrafficSituationInitializer(model, this);
+	}
+
+	@Override
+	public AutomatonInstance createAutomaton() {
+		return new TrafficSituationAutomaton(this);
 	}
 }

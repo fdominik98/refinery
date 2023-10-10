@@ -1,10 +1,11 @@
-package tools.refinery.store.monitor.gestureRecognitionCaseStudy;
+package tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy;
 
 import tools.refinery.store.dse.modification.ModificationAdapter;
 import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.model.Model;
+import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.store.tuple.Tuple;
-public final class GestureRecognitionInitializer {
+public final class GestureRecognitionInitializer extends ModelInitializer {
 	public final Interpretation<Boolean> bodyInterpretation;
 	public final Interpretation<GestureRecognitionMetaModel.Vector> headInterpretation;
 	public final Interpretation<GestureRecognitionMetaModel.Vector> rightHandInterpretation;
@@ -18,7 +19,7 @@ public final class GestureRecognitionInitializer {
 	public final Tuple head;
 
 	public GestureRecognitionInitializer(Model model, GestureRecognitionMetaModel metaModel) {
-		var modificationAdapter = model.getAdapter(ModificationAdapter.class);
+		super(model);
 
 		bodyInterpretation = model.getInterpretation(metaModel.bodySymbol);
 		headInterpretation = model.getInterpretation(metaModel.headSymbol);

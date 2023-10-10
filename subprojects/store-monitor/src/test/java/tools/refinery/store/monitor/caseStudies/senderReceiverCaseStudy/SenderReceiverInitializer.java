@@ -1,12 +1,12 @@
-package tools.refinery.store.monitor.senderReceiverCaseStudy;
+package tools.refinery.store.monitor.caseStudies.senderReceiverCaseStudy;
 
-import tools.refinery.store.dse.modification.ModificationAdapter;
 import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.model.Model;
+import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.store.tuple.Tuple;
 import tools.refinery.store.tuple.Tuple1;
 
-public final class SenderReceiverInitializer {
+public final class SenderReceiverInitializer extends ModelInitializer {
 	public final Tuple1 message1;
 	public final Tuple1 message2;
 	public final Tuple1 message3;
@@ -28,7 +28,7 @@ public final class SenderReceiverInitializer {
 	public final Interpretation<Boolean> doneInterpretation;
 
 	public SenderReceiverInitializer(Model model, SenderReceiverMetaModel metaModel) {
-		var modificationAdapter = model.getAdapter(ModificationAdapter.class);
+		super(model);
 
 		routerInterpretation = model.getInterpretation(metaModel.routerSymbol);
 		senderInterpretation = model.getInterpretation(metaModel.senderSymbol);

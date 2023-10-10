@@ -8,6 +8,7 @@ package tools.refinery.store.dse.transition.actions;
 import org.jetbrains.annotations.Nullable;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.tuple.Tuple;
+import tools.refinery.store.tuple.Tuple0;
 
 public class BoundAction {
 	private final Action action;
@@ -66,7 +67,7 @@ public class BoundAction {
 			return activation;
 		}
 		return switch (inputAllocation.length) {
-			case 0 -> Tuple0.INSTANCE;
+			case 0 -> Tuple.of();
 			case 1 -> Tuple.of(getInput(inputAllocation[0]));
 			case 2 -> Tuple.of(getInput(inputAllocation[0]), getInput(inputAllocation[1]));
 			case 3 -> Tuple.of(getInput(inputAllocation[0]), getInput(inputAllocation[1]),

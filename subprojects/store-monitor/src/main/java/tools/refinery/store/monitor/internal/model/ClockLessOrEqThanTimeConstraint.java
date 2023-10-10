@@ -5,8 +5,8 @@ import tools.refinery.store.query.term.DataVariable;
 import tools.refinery.store.query.term.Term;
 import static tools.refinery.store.query.term.int_.IntTerms.*;
 
-public class ClockLessThanTimeConstraint extends TimeConstraint{
-	public ClockLessThanTimeConstraint(Clock clock, int value) {
+public class ClockLessOrEqThanTimeConstraint extends TimeConstraint{
+	public ClockLessOrEqThanTimeConstraint(Clock clock, int value) {
 		super(clock, value);
 	}
 	@Override

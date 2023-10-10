@@ -6,6 +6,7 @@
 package tools.refinery.store.dse.strategy;
 
 import org.jetbrains.annotations.Nullable;
+import tools.refinery.evaluation.ModelEvaluationAdapter;
 import tools.refinery.evaluation.statespace.EvaluationStore;
 import tools.refinery.store.dse.propagation.PropagationAdapter;
 import tools.refinery.store.dse.transition.DesignSpaceExplorationAdapter;
@@ -16,6 +17,7 @@ import tools.refinery.store.map.Version;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.statecoding.StateCoderAdapter;
+import tools.refinery.visualization.ModelVisualizerAdapter;
 import tools.refinery.visualization.statespace.VisualizationStore;
 
 import java.util.Random;
@@ -26,6 +28,8 @@ public class BestFirstWorker {
 	final ActivationStoreWorker activationStoreWorker;
 	final StateCoderAdapter stateCoderAdapter;
 	final DesignSpaceExplorationAdapter explorationAdapter;
+	final ModelEvaluationAdapter evaluationAdapter;
+	final ModelVisualizerAdapter visualizerAdapter;
 	final ModelQueryAdapter queryAdapter;
 	final @Nullable PropagationAdapter propagationAdapter;
 	final VisualizationStore visualizationStore;
@@ -41,12 +45,14 @@ public class BestFirstWorker {
 		stateCoderAdapter = model.getAdapter(StateCoderAdapter.class);
 		queryAdapter = model.getAdapter(ModelQueryAdapter.class);
 		propagationAdapter = model.tryGetAdapter(PropagationAdapter.class).orElse(null);
+		evaluationAdapter = model.tryGetAdapter(ModelEvaluationAdapter.class).orElse(null);
+		visualizerAdapter = model.tryGetAdapter(ModelVisualizerAdapter.class).orElse(null);
 		activationStoreWorker = new ActivationStoreWorker(storeManager.getActivationStore(),
 				explorationAdapter.getTransformations());
 		visualizationStore = storeManager.getVisualizationStore();
-		isVisualizationEnabled = visualizationStore != null;
+		isVisualizationEnabled = visualizationStore != null && visualizerAdapter != null;
 		evaluationStore	= storeManager.getEvaluationStore();
-		isEvaluationEnabled =evaluationStore != null;
+		isEvaluationEnabled = evaluationStore != null && evaluationAdapter != null;
 	}
 
 	protected VersionWithObjectiveValue last = null;
@@ -145,7 +151,7 @@ public class BestFirstWorker {
 		queryAdapter.flushChanges();
 
 		Version oldVersion = null;
-		if (isVisualizationEnabled) {
+		if (isVisualizationEnabled || isEvaluationEnabled) {
 			oldVersion = last.version();
 		}
 		var submitResult = submit();
@@ -156,7 +162,9 @@ public class BestFirstWorker {
 					 visitResult.transformation().getDefinition().getName() + ", " + visitResult.activation());
  			}
 			if(isEvaluationEnabled) {
+				evaluationAdapter.pause();
 				evaluationStore.addModelVersion(oldVersion, newVersion);
+				evaluationAdapter.resume();
 			}
 		}
 		return new RandomVisitResult(submitResult, visitResult.mayHaveMore());

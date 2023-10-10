@@ -1,6 +1,6 @@
 package tools.refinery.store.monitor.utils;
 
-import tools.refinery.store.monitor.gestureRecognitionCaseStudy.GestureRecognitionMetaModel.Vector;
+import tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy.GestureRecognitionMetaModel.Vector;
 import tools.refinery.store.query.substitution.Substitution;
 import tools.refinery.store.query.term.Term;
 import tools.refinery.store.query.term.UnaryTerm;

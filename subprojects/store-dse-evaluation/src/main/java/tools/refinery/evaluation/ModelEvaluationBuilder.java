@@ -6,6 +6,8 @@
 package tools.refinery.evaluation;
 
 import tools.refinery.store.adapter.ModelAdapterBuilder;
+import tools.refinery.store.representation.Symbol;
 
 public interface ModelEvaluationBuilder extends ModelAdapterBuilder {
+	ModelAdapterBuilder acceptanceSymbol(Symbol<Boolean> acceptanceSymbol);
 }

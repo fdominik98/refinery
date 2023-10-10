@@ -1,23 +1,22 @@
-package tools.refinery.store.monitor.senderReceiverCaseStudy;
+package tools.refinery.store.monitor.caseStudies.senderReceiverCaseStudy;
 
+import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.term.Variable;
 
-public class SenderReceiverAutomaton {
+public class SenderReceiverAutomaton extends AutomatonInstance {
 
-	public StateMachine stateMachine = new StateMachine();
-
-	public final State s1 = stateMachine.startState;
 	public final State sent;
 	public final State timeout;
 	public final State done;
 
 	public SenderReceiverAutomaton(SenderReceiverMetaModel metaModel) {
+		super(0);
 
-		sent = stateMachine.createState(2);
-		timeout = stateMachine.createState(State.Type.TRAP);
-		done = stateMachine.createState(State.Type.ACCEPT, 10);
+		sent = stateMachine.createState(5);
+		timeout = stateMachine.createState(State.Type.ACCEPT, 10);
+		done = stateMachine.createState(State.Type.TRAP, 0);
 
 		Clock clock1 = new Clock("clock1");
 		var router = Variable.of("router");
@@ -39,12 +38,10 @@ public class SenderReceiverAutomaton {
 			);
 		}));
 
-		var timeoutGuard = Guard.of(new ClockGreaterThanTimeConstraint(clock1, 4));
+		var timeoutGuard = Guard.of(new ClockGreaterThanTimeConstraint(clock1, 5));
 
-		stateMachine.createTransition(s1, sendGuard, sent, new ClockResetAction(clock1));
+		stateMachine.createTransition(stateMachine.startState, sendGuard, sent, new ClockResetAction(clock1));
 		stateMachine.createTransition(sent, doneGuard, done);
-
-
 		stateMachine.createTransition(sent, timeoutGuard, timeout);
 	}
 }

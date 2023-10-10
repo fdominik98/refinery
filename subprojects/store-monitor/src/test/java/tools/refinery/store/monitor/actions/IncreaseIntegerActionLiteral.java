@@ -6,6 +6,7 @@ import tools.refinery.store.model.Model;
 import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
+import tools.refinery.store.tuple.Tuple0;
 
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class IncreaseIntegerActionLiteral implements ActionLiteral {
 		return tuple -> {
 			var integer = interpretation.get(tuple);
 			interpretation.put(tuple, integer + incInteger);
-			return Tuple0.INSTANCE;
+			return Tuple.of();
 		};
 	}
 }

@@ -1,11 +1,11 @@
-package tools.refinery.store.monitor.trafficSituationCaseStudy;
+package tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy;
 
-import tools.refinery.store.dse.modification.ModificationAdapter;
 import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.model.Model;
+import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.store.tuple.Tuple;
 
-public final class TrafficSituationInitializer {
+public final class TrafficSituationInitializer extends ModelInitializer {
 	public final Tuple[][] grid;
 	public final Tuple actor1;
 	public final Tuple actor2;
@@ -18,10 +18,9 @@ public final class TrafficSituationInitializer {
 	public final Interpretation<Boolean> westOfInterpretation;
 	public final Interpretation<Boolean> northOfInterpretation;
 
-	public TrafficSituationInitializer(Model model, TrafficSituationMetaModel metaModel,
-									   int X, int Y) {
-		var modificationAdapter = model.getAdapter(ModificationAdapter.class);
-		grid = new Tuple[X][Y];
+	public TrafficSituationInitializer(Model model, TrafficSituationMetaModel metaModel) {
+		super(model);
+		grid = new Tuple[2][5];
 
 		actorInterpretation = model.getInterpretation(metaModel.actorSymbol);
 		carInterpretation = model.getInterpretation(metaModel.carSymbol);

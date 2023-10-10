@@ -29,6 +29,7 @@ public class BestFirstExplorer extends BestFirstWorker {
 	}
 
 	public void explore() {
+		startTimerIfPresent();
 		var lastBest = submit().newVersion();
 		while (shouldRun()) {
 			if (lastBest == null) {
@@ -38,6 +39,7 @@ public class BestFirstExplorer extends BestFirstWorker {
 					lastBest = restoreToBest();
 				}
 				if (lastBest == null) {
+					stopTimerIfPresent();
 					return;
 				}
 			}
@@ -64,6 +66,19 @@ public class BestFirstExplorer extends BestFirstWorker {
 					break;
 				}
 			}
+		}
+		stopTimerIfPresent();
+	}
+
+	private void startTimerIfPresent(){
+		if(isEvaluationEnabled) {
+			this.evaluationAdapter.start();
+		}
+	}
+
+	private void stopTimerIfPresent() {
+		if(isEvaluationEnabled) {
+			this.evaluationAdapter.stop(evaluationStore);
 		}
 	}
 }

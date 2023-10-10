@@ -10,7 +10,7 @@ public class StateMachine {
 	public final ClockHolder clockHolder = new ClockHolder();
 	private double maxWeight = 0;
 
-	public StateMachine(int startWeight) {
+	public StateMachine(double startWeight) {
 		this.startState = this.createState(startWeight);
 	}
 
@@ -22,7 +22,7 @@ public class StateMachine {
 		return createState(State.Type.INTERMEDIATE, 0);
 	}
 
-	public State createState(int weight) {return createState(State.Type.INTERMEDIATE, weight);}
+	public State createState(double weight) {return createState(State.Type.INTERMEDIATE, weight);}
 
 	public State createState(State.Type type) {return createState(type, 0);}
 

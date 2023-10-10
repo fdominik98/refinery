@@ -1,21 +1,21 @@
-package tools.refinery.store.monitor.senderReceiverCaseStudy;
+package tools.refinery.store.monitor.caseStudies.senderReceiverCaseStudy;
 
 import tools.refinery.store.dse.transition.Rule;
+import tools.refinery.store.model.Model;
 import tools.refinery.store.monitor.actions.IncreaseIntegerActionLiteral;
+import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
+import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
+import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.store.query.literal.CallPolarity;
 import tools.refinery.store.query.term.Variable;
 import tools.refinery.store.query.view.AnySymbolView;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
-
-import java.util.ArrayList;
 import java.util.List;
-
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.add;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
-import static tools.refinery.store.query.literal.Literals.not;
 
-public final class SenderReceiverMetaModel {
+public final class SenderReceiverMetaModel extends MetaModelInstance {
 	public Symbol<Boolean> messageSymbol = Symbol.of("Message", 1);
 	public AnySymbolView messageView = new KeyOnlyView<>(messageSymbol);
 	public Symbol<Boolean> senderSymbol = Symbol.of("Sender", 1);
@@ -35,19 +35,18 @@ public final class SenderReceiverMetaModel {
 	public AnySymbolView doneView = new KeyOnlyView<>(doneSymbol);
 	public Symbol<Boolean> atSymbol = Symbol.of("at", 2);
 	public AnySymbolView atView = new KeyOnlyView<>(atSymbol);
-	public List<Symbol<Boolean>> symbols = new ArrayList<>();
-	public List<Rule> transformationRules = new ArrayList<>();
 
 	public SenderReceiverMetaModel(Symbol<Integer> clockSymbol){
-		symbols.add(messageSymbol);
-		symbols.add(senderSymbol);
-		symbols.add(receiverSymbol);
-		symbols.add(routerSymbol);
-		symbols.add(sendSymbol);
-		symbols.add(receiveSymbol);
-		symbols.add(nextSymbol);
-		symbols.add(doneSymbol);
-		symbols.add(atSymbol);
+		super(clockSymbol);
+		addSymbol(messageSymbol);
+		addSymbol(senderSymbol);
+		addSymbol(receiverSymbol);
+		addSymbol(routerSymbol);
+		addSymbol(sendSymbol);
+		addSymbol(receiveSymbol);
+		addSymbol(nextSymbol);
+		addSymbol(doneSymbol);
+		addSymbol(atSymbol);
 
 		var sendRule = Rule.of("send", (builder, sender, router, message) -> builder
 				.clause(
@@ -99,5 +98,15 @@ public final class SenderReceiverMetaModel {
 		transformationRules.add(sendRule);
 		transformationRules.add(receiveRule);
 		transformationRules.add(transmitRule);
+	}
+
+	@Override
+	public ModelInitializer createInitializer(Model model) {
+		return new SenderReceiverInitializer(model, this);
+	}
+
+	@Override
+	public AutomatonInstance createAutomaton() {
+		return new SenderReceiverAutomaton(this);
 	}
 }

@@ -19,6 +19,7 @@ import tools.refinery.store.statecoding.Morphism;
 import tools.refinery.store.statecoding.ObjectCode;
 import tools.refinery.store.statecoding.StateEquivalenceChecker;
 import tools.refinery.store.tuple.Tuple;
+import tools.refinery.store.tuple.Tuple0;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -150,7 +151,7 @@ public class StateEquivalenceCheckerImpl implements StateEquivalenceChecker {
 	private Tuple apply(Tuple t, Morphism m) {
 		final int arity = t.getSize();
 		if (arity == 0) {
-			return Tuple0.INSTANCE;
+			return Tuple.of();
 		} else if (arity == 1) {
 			return Tuple.of(m.get(t.get(0)));
 		} else if (arity == 2) {

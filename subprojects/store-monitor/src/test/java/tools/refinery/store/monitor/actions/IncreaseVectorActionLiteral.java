@@ -3,7 +3,7 @@ package tools.refinery.store.monitor.actions;
 import tools.refinery.store.dse.transition.actions.ActionLiteral;
 import tools.refinery.store.dse.transition.actions.BoundActionLiteral;
 import tools.refinery.store.model.Model;
-import tools.refinery.store.monitor.gestureRecognitionCaseStudy.GestureRecognitionMetaModel;
+import tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy.GestureRecognitionMetaModel;
 import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
@@ -49,7 +49,7 @@ public class IncreaseVectorActionLiteral implements ActionLiteral {
 			var vector = interpretation.get(tuple);
 			var newVector = GestureRecognitionMetaModel.Vector.of(vector.x + incVector.x, vector.y + incVector.y);
 			interpretation.put(tuple, newVector);
-			return Tuple0.INSTANCE;
+			return Tuple.of();
 		};
 	}
 }

@@ -10,9 +10,9 @@ import tools.refinery.store.dse.modification.ModificationAdapter;
 import tools.refinery.store.monitor.internal.StateMachineTraversal;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.model.ModelStore;
-import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationInitializer;
-import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationAutomaton;
-import tools.refinery.store.monitor.trafficSituationCaseStudy.TrafficSituationMetaModel;
+import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationInitializer;
+import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationAutomaton;
+import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationMetaModel;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.interpreter.QueryInterpreterAdapter;
@@ -20,6 +20,7 @@ import tools.refinery.store.query.term.Variable;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
+
 import java.util.List;
 import java.util.Map;
 import static tools.refinery.store.monitor.utils.QueryAssertions.assertResults;
@@ -91,16 +92,16 @@ class AdapterTest {
 		var inState3Results2 = queryEngine.getResultSet(monitor.get(s3, List.of(c1, c2, a1)).query);
 
 		// Init model
-		clockInterpretation.put(Tuple0.INSTANCE, 0);
+		clockInterpretation.put(Tuple.of(), 0);
 		hasBehindInterpretation.put(Tuple.of(0, 2), true);
 		queryEngine.flushChanges();
 
 		monitorAdapter.init();
 
-		clockInterpretation.put(Tuple0.INSTANCE, 4);
+		clockInterpretation.put(Tuple.of(), 4);
 		monitorAdapter.refreshStates();
 
-		assertResults(Map.of(Tuple0.INSTANCE, true), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState2Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState3Results);
 		assertResults(Map.of(
@@ -110,10 +111,10 @@ class AdapterTest {
 				Tuple.of(0, 2, 0), false,
 				Tuple.of(0, 2, 1), false), inState1Results2);
 
-		clockInterpretation.put(Tuple0.INSTANCE, 5);
+		clockInterpretation.put(Tuple.of(), 5);
 		monitorAdapter.refreshStates();
 
-		assertResults(Map.of(Tuple0.INSTANCE, true), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(Tuple.of(0, 2), true), inState2Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState3Results);
 		assertResults(Map.of(
@@ -128,10 +129,10 @@ class AdapterTest {
 		hasBehindInterpretation.put(Tuple.of(0, 2), false);
 		queryEngine.flushChanges();
 
-		clockInterpretation.put(Tuple0.INSTANCE, 6);
+		clockInterpretation.put(Tuple.of(), 6);
 		monitorAdapter.refreshStates();
 
-		assertResults(Map.of(Tuple0.INSTANCE, true), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState2Results);
 		assertResults(Map.of(Tuple.of(0, 2), true), inState3Results);
 		assertResults(Map.of(
@@ -141,10 +142,10 @@ class AdapterTest {
 				Tuple.of(0, 2, 0), true,
 				Tuple.of(0, 2, 1), true), inState1Results2);
 
-		clockInterpretation.put(Tuple0.INSTANCE, 11);
+		clockInterpretation.put(Tuple.of(), 11);
 		monitorAdapter.refreshStates();
 
-		assertResults(Map.of(Tuple0.INSTANCE, true), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(Tuple.of(0, 2), false), inState2Results);
 		assertResults(Map.of(Tuple.of(0, 2), true), inState3Results);
 		assertResults(Map.of(
@@ -176,7 +177,7 @@ class AdapterTest {
 		var monitorAdapter = model.getAdapter(ModelMonitorAdapter.class);
 		var monitor = monitorAdapter.getMonitor();
 
-		var inState1Results = queryEngine.getResultSet(monitor.get(scenario.s1, List.of()).query);
+		var inState1Results = queryEngine.getResultSet(monitor.get(scenario.stateMachine.startState, List.of()).query);
 		var inState2Results = queryEngine.getResultSet(monitor.get(scenario.s2, List.of(scenario.a1,
 				scenario.a2)).query);
 		var inState3Results = queryEngine.getResultSet(monitor.get(scenario.s3,
@@ -185,21 +186,21 @@ class AdapterTest {
 				scenario.a2)).query);
 
 		// Init model
-		TrafficSituationInitializer initializer = new TrafficSituationInitializer(model, metaModel, 2,	5);
+		TrafficSituationInitializer initializer = new TrafficSituationInitializer(model, metaModel);
 		monitorAdapter.init();
 
 		Tuple actors = Tuple.of(initializer.actor1.get(0), initializer.actor2.get(0));
 
 		queryEngine.flushChanges();
 
-		assertResults(Map.of(Tuple0.INSTANCE, true), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(actors, false), inState2Results);
 		assertResults(Map.of(actors, false), inState3Results);
 		assertResults(Map.of(actors, false), inState4Results);
 
 		model.commit();
 
-		assertResults(Map.of(Tuple0.INSTANCE, true), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(actors, true), inState2Results);
 		assertResults(Map.of(actors, false), inState3Results);
 		assertResults(Map.of(actors, false), inState4Results);
@@ -210,7 +211,7 @@ class AdapterTest {
 		queryEngine.flushChanges();
 		model.commit();
 
-		assertResults(Map.of(Tuple0.INSTANCE, true), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(actors, false), inState2Results);
 		assertResults(Map.of(actors, true), inState3Results);
 		assertResults(Map.of(actors, false), inState4Results);
@@ -221,7 +222,7 @@ class AdapterTest {
 		queryEngine.flushChanges();
 		model.commit();
 
-		assertResults(Map.of(Tuple0.INSTANCE, true), inState1Results);
+		assertResults(Map.of(Tuple.of(), true), inState1Results);
 		assertResults(Map.of(actors, false), inState2Results);
 		assertResults(Map.of(actors, false), inState3Results);
 		assertResults(Map.of(actors, true), inState4Results);

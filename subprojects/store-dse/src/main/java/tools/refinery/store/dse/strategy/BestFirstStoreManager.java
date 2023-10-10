@@ -5,6 +5,7 @@
  */
 package tools.refinery.store.dse.strategy;
 
+import tools.refinery.evaluation.ModelEvaluationAdapter;
 import tools.refinery.evaluation.statespace.EvaluationStore;
 import tools.refinery.evaluation.statespace.internal.EvaluationStoreImpl;
 import tools.refinery.store.dse.transition.DesignSpaceExplorationStoreAdapter;

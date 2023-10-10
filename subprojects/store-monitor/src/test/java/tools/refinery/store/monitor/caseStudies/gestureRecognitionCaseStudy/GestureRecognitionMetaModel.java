@@ -1,7 +1,11 @@
-package tools.refinery.store.monitor.gestureRecognitionCaseStudy;
+package tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy;
 
 import tools.refinery.store.dse.transition.Rule;
+import tools.refinery.store.model.Model;
 import tools.refinery.store.monitor.actions.IncreaseVectorActionLiteral;
+import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
+import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
+import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.store.monitor.utils.VectorYTerm;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.dnf.RelationalQuery;
@@ -13,14 +17,22 @@ import tools.refinery.store.query.view.AnySymbolView;
 import tools.refinery.store.query.view.FunctionView;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
-import java.util.ArrayList;
 import java.util.List;
-
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.*;
 import static tools.refinery.store.query.literal.Literals.check;
 import static tools.refinery.store.query.term.int_.IntTerms.*;
 
-public class GestureRecognitionMetaModel {
+public class GestureRecognitionMetaModel extends MetaModelInstance {
+	@Override
+	public ModelInitializer createInitializer(Model model) {
+		return new GestureRecognitionInitializer(model, this);
+	}
+
+	@Override
+	public AutomatonInstance createAutomaton() {
+		return new GestureRecognitionAutomaton(this);
+	}
+
 	public static class Vector {
 		Vector(int x, int y){
 			this.x = x;
@@ -43,86 +55,17 @@ public class GestureRecognitionMetaModel {
 	public AnySymbolView rightShoulderView = new FunctionView<>(rightShoulderSymbol);
 	public Symbol<Vector> headSymbol = Symbol.of("Head",2, Vector.class);
 	public AnySymbolView headView = new FunctionView<>(headSymbol);
-
 	public Symbol<Boolean> handMovedUpSymbol = Symbol.of("HandMovedUp", 2);
 	public AnySymbolView handMovedUpView = new KeyOnlyView<>(handMovedUpSymbol);
 
-	public List<Symbol<?>> symbols = new ArrayList<>();
-	public List<Rule> transformationRules = new ArrayList<>();
-
-	private RelationalQuery handCondition(boolean lift) {
-		return Query.of((builder, body, hand) -> {
-			DataVariable<Vector> handVector = Variable.of(Vector.class);
-			DataVariable<Vector> elbowVector = Variable.of(Vector.class);
-
-			var elbowY = new VectorYTerm(elbowVector);
-			var handY = new VectorYTerm(handVector);
-
-			builder.clause(
-					bodyView.call(body),
-					rightHandView.call(body, hand, handVector),
-					rightElbowView.call(body, Variable.of(), elbowVector),
-					lift ? check(lessEq(sub(handY, elbowY), constant(2))) :
-							check(lessEq(sub(elbowY, handY), constant(2)))
-			);
-		});
-	}
-
-	private RelationalQuery elbowCondition(boolean lift) {
-		return Query.of((builder, body, elbow, hand) -> {
-			DataVariable<Vector> elbowVector = Variable.of(Vector.class);
-			DataVariable<Vector> shoulderVector = Variable.of(Vector.class);
-			DataVariable<Vector> handVector = Variable.of(Vector.class);
-
-			var elbowY = new VectorYTerm(elbowVector);
-			var shoulderY = new VectorYTerm(shoulderVector);
-
-			builder.clause(
-					bodyView.call(body),
-					rightElbowView.call(body, elbow, elbowVector),
-					rightShoulderView.call(body, Variable.of(), shoulderVector),
-					rightHandView.call(body, hand, handVector),
-					lift ? check(lessEq(sub(elbowY, shoulderY), constant(2))) :
-							check(lessEq(sub(shoulderY, elbowY), constant(2)))
-			);
-		});
-	}
-
-	private RelationalQuery shoulderCondition(boolean lift) {
-		return Query.of(builder -> {
-			var body = builder.parameter();
-			var head = builder.parameter();
-			var elbow = builder.parameter();
-			var shoulder = builder.parameter();
-			var hand = builder.parameter();
-
-			DataVariable<Vector> elbowVector = Variable.of(Vector.class);
-			DataVariable<Vector> shoulderVector = Variable.of(Vector.class);
-			DataVariable<Vector> handVector = Variable.of(Vector.class);
-			DataVariable<Vector> headVector = Variable.of(Vector.class);
-
-			var shoulderY = new VectorYTerm(shoulderVector);
-			var headY = new VectorYTerm(shoulderVector);
-
-			builder.clause(
-					bodyView.call(body),
-					rightElbowView.call(body, elbow, elbowVector),
-					rightShoulderView.call(body, shoulder, shoulderVector),
-					rightHandView.call(body, hand, handVector),
-					headView.call(body, head, headVector),
-					lift ? check(lessEq(sub(shoulderY, headY), constant(1))) :
-							check(lessEq(sub(headY, shoulderY), constant(2)))
-			);
-		});
-	}
-
 	public GestureRecognitionMetaModel(){
-		symbols.add(bodySymbol);
-		symbols.add(rightHandSymbol);
-		symbols.add(rightElbowSymbol);
-		symbols.add(rightShoulderSymbol);
-		symbols.add(headSymbol);
-		symbols.add(handMovedUpSymbol);
+		super(null);
+		addSymbol(bodySymbol);
+		addSymbol(rightHandSymbol);
+		addSymbol(rightElbowSymbol);
+		addSymbol(rightShoulderSymbol);
+		addSymbol(headSymbol);
+		addSymbol(handMovedUpSymbol);
 
 		var moveHandDownRule = Rule.of("MoveHandDownRule", (builder, body, hand) -> {
 			builder.clause(handCondition(false).call(body, hand))
@@ -192,6 +135,72 @@ public class GestureRecognitionMetaModel {
 		transformationRules.add(moveElbowUpRule);
 		transformationRules.add(moveShoulderUpRule);
 		transformationRules.add(moveShoulderDownRule);
+	}
+
+	private RelationalQuery handCondition(boolean lift) {
+		return Query.of((builder, body, hand) -> {
+			DataVariable<Vector> handVector = Variable.of(Vector.class);
+			DataVariable<Vector> elbowVector = Variable.of(Vector.class);
+
+			var elbowY = new VectorYTerm(elbowVector);
+			var handY = new VectorYTerm(handVector);
+
+			builder.clause(
+					bodyView.call(body),
+					rightHandView.call(body, hand, handVector),
+					rightElbowView.call(body, Variable.of(), elbowVector),
+					lift ? check(lessEq(sub(handY, elbowY), constant(2))) :
+							check(lessEq(sub(elbowY, handY), constant(2)))
+			);
+		});
+	}
+
+	private RelationalQuery elbowCondition(boolean lift) {
+		return Query.of((builder, body, elbow, hand) -> {
+			DataVariable<Vector> elbowVector = Variable.of(Vector.class);
+			DataVariable<Vector> shoulderVector = Variable.of(Vector.class);
+			DataVariable<Vector> handVector = Variable.of(Vector.class);
+
+			var elbowY = new VectorYTerm(elbowVector);
+			var shoulderY = new VectorYTerm(shoulderVector);
+
+			builder.clause(
+					bodyView.call(body),
+					rightElbowView.call(body, elbow, elbowVector),
+					rightShoulderView.call(body, Variable.of(), shoulderVector),
+					rightHandView.call(body, hand, handVector),
+					lift ? check(lessEq(sub(elbowY, shoulderY), constant(2))) :
+							check(lessEq(sub(shoulderY, elbowY), constant(2)))
+			);
+		});
+	}
+
+	private RelationalQuery shoulderCondition(boolean lift) {
+		return Query.of(builder -> {
+			var body = builder.parameter();
+			var head = builder.parameter();
+			var elbow = builder.parameter();
+			var shoulder = builder.parameter();
+			var hand = builder.parameter();
+
+			DataVariable<Vector> elbowVector = Variable.of(Vector.class);
+			DataVariable<Vector> shoulderVector = Variable.of(Vector.class);
+			DataVariable<Vector> handVector = Variable.of(Vector.class);
+			DataVariable<Vector> headVector = Variable.of(Vector.class);
+
+			var shoulderY = new VectorYTerm(shoulderVector);
+			var headY = new VectorYTerm(shoulderVector);
+
+			builder.clause(
+					bodyView.call(body),
+					rightElbowView.call(body, elbow, elbowVector),
+					rightShoulderView.call(body, shoulder, shoulderVector),
+					rightHandView.call(body, hand, handVector),
+					headView.call(body, head, headVector),
+					lift ? check(lessEq(sub(shoulderY, headY), constant(1))) :
+							check(lessEq(sub(headY, shoulderY), constant(2)))
+			);
+		});
 	}
 
 	public RelationalQuery rightHandAboveHead(NodeVariable body){

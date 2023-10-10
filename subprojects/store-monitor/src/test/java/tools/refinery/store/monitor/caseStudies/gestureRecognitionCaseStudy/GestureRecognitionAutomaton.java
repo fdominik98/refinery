@@ -1,14 +1,12 @@
-package tools.refinery.store.monitor.gestureRecognitionCaseStudy;
+package tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy;
 
+import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.internal.model.Guard;
 import tools.refinery.store.monitor.internal.model.State;
-import tools.refinery.store.monitor.internal.model.StateMachine;
 import tools.refinery.store.query.term.NodeVariable;
 
-public class GestureRecognitionAutomaton {
+public class GestureRecognitionAutomaton extends AutomatonInstance {
 
-	public StateMachine stateMachine = new StateMachine(4);
-	public final State s1 = stateMachine.startState;
 	public final State s2;
 	public final State s3;
 	public final State s4;
@@ -18,6 +16,8 @@ public class GestureRecognitionAutomaton {
 
 
 	public GestureRecognitionAutomaton(GestureRecognitionMetaModel metaModel) {
+		super(4);
+
 		s2 = stateMachine.createState(3);
 		s3 = stateMachine.createState( 7);
 		s4 = stateMachine.createState(State.Type.ACCEPT, 10);
@@ -32,7 +32,7 @@ public class GestureRecognitionAutomaton {
 		var stretchedRightArmAndMovedDown = Guard.of(metaModel.stretchedRightArmAndMovedDown(body));
 		var stretchedRightArmAndMovedUp = Guard.of(metaModel.stretchedRightArmAndMovedUp(body));
 
-		stateMachine.createTransition(s1, stretchedRightArm, s2);
+		stateMachine.createTransition(stateMachine.startState, stretchedRightArm, s2);
 
 		stateMachine.createTransition(s2, rightHandMovedUp.neg(), s5);
 

@@ -8,6 +8,7 @@ import tools.refinery.store.monitor.internal.model.Monitor;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
+import tools.refinery.store.tuple.Tuple0;
 
 public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListener {
 
@@ -55,13 +56,13 @@ public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListen
 		int now = 0;
 		if(clockSymbol != null){
 			var clockInterpretation = this.model.getInterpretation(clockSymbol);
-			now = clockInterpretation.get(Tuple0.INSTANCE);
+			now = clockInterpretation.get(Tuple.of());
 		}
 		this.monitor.clockHolder.reset(now);
-		stateInterpretation.put(Tuple0.INSTANCE, this.monitor.clockHolder);
+		stateInterpretation.put(Tuple.of(), this.monitor.clockHolder);
 
 		var fitnessInterpretation = this.model.getInterpretation(this.monitor.fitnessSymbol);
-		fitnessInterpretation.put(Tuple0.INSTANCE, monitor.stateMachine.startState.weight);
+		fitnessInterpretation.put(Tuple.of(), monitor.stateMachine.startState.weight);
 
 		queryEngine.flushChanges();
 	}

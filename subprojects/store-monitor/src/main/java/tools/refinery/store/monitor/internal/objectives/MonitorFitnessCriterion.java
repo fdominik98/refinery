@@ -5,6 +5,7 @@ import tools.refinery.store.dse.transition.objectives.CriterionCalculator;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.monitor.internal.model.Monitor;
 import tools.refinery.store.tuple.Tuple;
+import tools.refinery.store.tuple.Tuple0;
 
 public class MonitorFitnessCriterion implements Criterion{
 
@@ -20,7 +21,7 @@ public class MonitorFitnessCriterion implements Criterion{
 	public CriterionCalculator createCalculator(Model model) {
 		var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
 		return () -> negated ?
-				(fitnessInterpretation.get(Tuple0.INSTANCE) > 1) :
-				(fitnessInterpretation.get(Tuple0.INSTANCE) <= 1);
+				(fitnessInterpretation.get(Tuple.of()) > 1) :
+				(fitnessInterpretation.get(Tuple.of()) <= 1);
 	}
 }

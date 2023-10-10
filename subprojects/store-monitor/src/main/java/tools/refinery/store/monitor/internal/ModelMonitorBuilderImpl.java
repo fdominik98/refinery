@@ -18,6 +18,7 @@ import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.query.term.Variable;
 import tools.refinery.store.query.view.FunctionView;
 import tools.refinery.store.representation.Symbol;
+import tools.refinery.store.statecoding.StateCoderBuilder;
 import tools.refinery.store.tuple.Tuple;
 import java.util.*;
 import java.util.function.Consumer;
@@ -63,7 +64,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 	protected void doConfigure(ModelStoreBuilder storeBuilder) {
 		storeBuilder.symbols(monitor.symbolList);
 		storeBuilder.symbol(monitor.fitnessSymbol);
-		storeBuilder.symbol(monitor.acceptedSymbol);
+		storeBuilder.symbol(monitor.acceptanceSymbol);
 
 		for (Transition t : monitor.stateMachine.transitions) {
 			for(List<NodeVariable> fromParamList : monitor.get(t.from).keySet()){
@@ -98,14 +99,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 
 						for (TimeConstraint tc : t.guard.timeConstraints){
 							var time = new ClockValueTerm(output, new ConstantTerm<>(Clock.class, tc.clock));
-							if(tc instanceof ClockGreaterThanTimeConstraint) {
-								var term = greater(sub(now, time), constant(tc.timeSpan));
-								literals.add(check(term));
-							}
-							else if(tc instanceof ClockLessThanTimeConstraint) {
-								var term = less(sub(now, time), constant(tc.timeSpan));
-								literals.add(Literals.check(term));
-							}
+							literals.add(check(tc.getTerm(now, time)));
 						}
 					}
 					builder.clause(literals);
@@ -129,7 +123,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 					int now = 0;
 					if(clockSymbol != null){
 						var clockInterpretation = model.getInterpretation(clockSymbol);
-						now = clockInterpretation.get(Tuple0.INSTANCE);
+						now = clockInterpretation.get(Tuple.of());
 					}
 
 					while(cursor.move()){
@@ -152,8 +146,8 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 							toStateInterpretation.put(res, clockHolder);
 						}
 						if (t.to.isAccept()) {
-							var acceptInterpretation = model.getInterpretation(monitor.acceptedSymbol);
-							acceptInterpretation.put(Tuple0.INSTANCE, true);
+							var acceptInterpretation = model.getInterpretation(monitor.acceptanceSymbol);
+							acceptInterpretation.put(Tuple.of(), true);
 						}
 					}
 				};
@@ -178,12 +172,20 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 				}
 			}
 			var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
-			fitnessInterpretation.put(Tuple0.INSTANCE, 1 / (weightSum + 1));
+			fitnessInterpretation.put(Tuple.of(), 1 / (weightSum + 1));
 		};
 		actionSet.add(fitnessActon);
 		actionSet.add(flushAction);
 
 		var queryBuilder = storeBuilder.getAdapter(ModelQueryBuilder.class);
 		queryBuilder.queries(querySet);
+
+		var stateCoderOpt = storeBuilder.tryGetAdapter(StateCoderBuilder.class);
+		if(stateCoderOpt.isPresent()) {
+			var stateCoder = stateCoderOpt.get();
+			stateCoder.excludeAll(monitor.symbolList);
+			stateCoder.excludeAll(monitor.acceptanceSymbol);
+			stateCoder.exclude(monitor.fitnessSymbol);
+		}
 	}
 }

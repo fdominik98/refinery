@@ -58,7 +58,7 @@ public class PutActionLiteral<T> extends AbstractActionLiteral {
 		var interpretation = model.getInterpretation(symbol);
 		return tuple -> {
 			interpretation.put(tuple, value);
-			return Tuple0.INSTANCE;
+			return Tuple.of();
 		};
 	}
 }
