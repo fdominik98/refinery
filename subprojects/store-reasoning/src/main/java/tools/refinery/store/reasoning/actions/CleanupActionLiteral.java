@@ -38,6 +38,6 @@ public class CleanupActionLiteral extends AbstractActionLiteral {
 	@Override
 	public BoundActionLiteral bindToModel(Model model) {
 		var reasoningAdapter = model.getAdapter(ReasoningAdapter.class);
-		return tuple -> reasoningAdapter.cleanup(tuple.get(0)) ? Tuple0.INSTANCE : null;
+		return tuple -> reasoningAdapter.cleanup(tuple.get(0)) ? Tuple.of() : null;
 	}
 }

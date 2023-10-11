@@ -78,17 +78,17 @@ class StateCoderUnitTest {
 
 		assertEquals(hashOf0, stateCoder.calculateModelCode());
 
-		populationI.put(Tuple0.INSTANCE, 1);
+		populationI.put(Tuple.of(), 1);
 		int code1 = stateCoder.calculateModelCode();
 
 		assertNotEquals(hashOf0, stateCoder.calculateModelCode());
 
-		populationI.put(Tuple0.INSTANCE, 2);
+		populationI.put(Tuple.of(), 2);
 		int code2 = stateCoder.calculateModelCode();
 
 		assertNotEquals(code1, code2);
 
-		populationI.put(Tuple0.INSTANCE, 1);
+		populationI.put(Tuple.of(), 1);
 		assertEquals(code1, stateCoder.calculateModelCode());
 	}
 

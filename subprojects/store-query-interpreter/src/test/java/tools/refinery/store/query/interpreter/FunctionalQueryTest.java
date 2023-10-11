@@ -255,7 +255,7 @@ class FunctionalQueryTest {
 		ageInterpretation.put(Tuple.of(1), 24);
 
 		queryEngine.flushChanges();
-		assertResults(Map.of(Tuple0.INSTANCE, 36), queryResultSet);
+		assertResults(Map.of(Tuple.of(), 36), queryResultSet);
 	}
 
 	@QueryEngineTest
@@ -288,7 +288,7 @@ class FunctionalQueryTest {
 		ageInterpretation.put(Tuple.of(1), 24);
 
 		queryEngine.flushChanges();
-		assertResults(Map.of(Tuple0.INSTANCE, 36), queryResultSet);
+		assertResults(Map.of(Tuple.of(), 36), queryResultSet);
 	}
 
 	@QueryEngineTest
@@ -318,8 +318,8 @@ class FunctionalQueryTest {
 		var minResultSet = queryEngine.getResultSet(minQuery);
 		var maxResultSet = queryEngine.getResultSet(maxQuery);
 
-		assertResults(Map.of(Tuple0.INSTANCE, Integer.MAX_VALUE), minResultSet);
-		assertResults(Map.of(Tuple0.INSTANCE, Integer.MIN_VALUE), maxResultSet);
+		assertResults(Map.of(Tuple.of(), Integer.MAX_VALUE), minResultSet);
+		assertResults(Map.of(Tuple.of(), Integer.MIN_VALUE), maxResultSet);
 
 		personInterpretation.put(Tuple.of(0), true);
 		personInterpretation.put(Tuple.of(1), true);
@@ -330,23 +330,23 @@ class FunctionalQueryTest {
 		friendInterpretation.put(Tuple.of(1, 2), TruthValue.TRUE);
 
 		queryEngine.flushChanges();
-		assertResults(Map.of(Tuple0.INSTANCE, 0), minResultSet);
-		assertResults(Map.of(Tuple0.INSTANCE, 2), maxResultSet);
+		assertResults(Map.of(Tuple.of(), 0), minResultSet);
+		assertResults(Map.of(Tuple.of(), 2), maxResultSet);
 
 		friendInterpretation.put(Tuple.of(2, 0), TruthValue.TRUE);
 		friendInterpretation.put(Tuple.of(2, 1), TruthValue.TRUE);
 
 		queryEngine.flushChanges();
-		assertResults(Map.of(Tuple0.INSTANCE, 1), minResultSet);
-		assertResults(Map.of(Tuple0.INSTANCE, 2), maxResultSet);
+		assertResults(Map.of(Tuple.of(), 1), minResultSet);
+		assertResults(Map.of(Tuple.of(), 2), maxResultSet);
 
 		friendInterpretation.put(Tuple.of(0, 1), TruthValue.FALSE);
 		friendInterpretation.put(Tuple.of(1, 0), TruthValue.FALSE);
 		friendInterpretation.put(Tuple.of(2, 0), TruthValue.FALSE);
 
 		queryEngine.flushChanges();
-		assertResults(Map.of(Tuple0.INSTANCE, 0), minResultSet);
-		assertResults(Map.of(Tuple0.INSTANCE, 1), maxResultSet);
+		assertResults(Map.of(Tuple.of(), 0), minResultSet);
+		assertResults(Map.of(Tuple.of(), 1), maxResultSet);
 	}
 
 	@QueryEngineTest

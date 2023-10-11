@@ -55,6 +55,6 @@ public class MergeActionLiteral<A, C> extends AbstractActionLiteral {
 	@Override
 	public BoundActionLiteral bindToModel(Model model) {
 		var refiner = model.getAdapter(ReasoningAdapter.class).getRefiner(partialSymbol);
-		return tuple -> refiner.merge(tuple, value) ? Tuple0.INSTANCE : null;
+		return tuple -> refiner.merge(tuple, value) ? Tuple.of() : null;
 	}
 }

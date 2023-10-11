@@ -61,12 +61,12 @@ class EquivalenceTest {
 
 		Version v1 = model.commit();
 
-		populationI.put(Tuple0.INSTANCE, 1);
+		populationI.put(Tuple.of(), 1);
 		Version v2 = model.commit();
 
 		assertEquals(StateEquivalenceChecker.EquivalenceResult.DIFFERENT, stateCoder.checkEquivalence(v1, v2));
 
-		populationI.put(Tuple0.INSTANCE, 2);
+		populationI.put(Tuple.of(), 2);
 		Version v3 = model.commit();
 
 		assertEquals(StateEquivalenceChecker.EquivalenceResult.DIFFERENT, stateCoder.checkEquivalence(v2, v3));

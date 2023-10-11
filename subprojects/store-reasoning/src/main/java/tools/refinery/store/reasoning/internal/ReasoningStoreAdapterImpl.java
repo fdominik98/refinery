@@ -100,7 +100,7 @@ class ReasoningStoreAdapterImpl implements ReasoningStoreAdapter {
 
 	public Model createInitialModel(ModelSeed modelSeed) {
 		var model = store.createEmptyModel();
-		model.getInterpretation(ReasoningAdapterImpl.NODE_COUNT_SYMBOL).put(Tuple0.INSTANCE, modelSeed.getNodeCount());
+		model.getInterpretation(ReasoningAdapterImpl.NODE_COUNT_SYMBOL).put(Tuple.of(), modelSeed.getNodeCount());
 		for (var initializer : initializers) {
 			initializer.initialize(model, modelSeed);
 		}

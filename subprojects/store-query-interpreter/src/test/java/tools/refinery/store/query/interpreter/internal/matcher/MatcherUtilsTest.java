@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class MatcherUtilsTest {
 	@Test
 	void toViatra0Test() {
-		var viatraTuple = MatcherUtils.toViatraTuple(Tuple0.INSTANCE);
+		var viatraTuple = MatcherUtils.toViatraTuple(Tuple.of());
 		assertThat(viatraTuple.getSize(), is(0));
 		assertThat(viatraTuple, instanceOf(FlatTuple0.class));
 	}

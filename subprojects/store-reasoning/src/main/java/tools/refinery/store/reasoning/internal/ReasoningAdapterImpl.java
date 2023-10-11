@@ -157,8 +157,8 @@ class ReasoningAdapterImpl implements ReasoningAdapter {
 	@Override
 	@Nullable
 	public Tuple1 split(int parentNode) {
-		int newNodeId = nodeCountInterpretation.get(Tuple0.INSTANCE);
-		nodeCountInterpretation.put(Tuple0.INSTANCE, newNodeId + 1);
+		int newNodeId = nodeCountInterpretation.get(Tuple.of());
+		nodeCountInterpretation.put(Tuple.of(), newNodeId + 1);
 		// Avoid creating an iterator object.
 		//noinspection ForLoopReplaceableByForEach
 		for (int i = 0; i < storageRefiners.length; i++) {
@@ -198,16 +198,16 @@ class ReasoningAdapterImpl implements ReasoningAdapter {
 				return false;
 			}
 		}
-		int currentModelSize = nodeCountInterpretation.get(Tuple0.INSTANCE);
+		int currentModelSize = nodeCountInterpretation.get(Tuple.of());
 		if (nodeToDelete == currentModelSize - 1) {
-			nodeCountInterpretation.put(Tuple0.INSTANCE, nodeToDelete);
+			nodeCountInterpretation.put(Tuple.of(), nodeToDelete);
 		}
 		return true;
 	}
 
 	@Override
 	public int getNodeCount() {
-		Integer nodeCount = nodeCountInterpretation.get(Tuple0.INSTANCE);
+		Integer nodeCount = nodeCountInterpretation.get(Tuple.of());
 		return nodeCount == null ? 0 : nodeCount;
 	}
 }

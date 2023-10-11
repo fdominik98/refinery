@@ -58,7 +58,7 @@ final class MatcherUtils {
 					.formatted(targetArity, viatraTuple));
 		}
 		return switch (targetArity) {
-			case 0 -> Tuple0.INSTANCE;
+			case 0 -> Tuple.of();
 			case 1 -> Tuple.of(unwrap(viatraTuple, 0));
 			case 2 -> Tuple.of(unwrap(viatraTuple, 0), unwrap(viatraTuple, 1));
 			case 3 -> Tuple.of(unwrap(viatraTuple, 0), unwrap(viatraTuple, 1), unwrap(viatraTuple, 2));
