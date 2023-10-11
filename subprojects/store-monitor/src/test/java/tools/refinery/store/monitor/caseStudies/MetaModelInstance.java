@@ -7,16 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class MetaModelInstance {
-	public final Symbol<Integer> clockSymbol;
+	public final Symbol<Integer> clockSymbol = Symbol.of("Clock", 0, Integer.class);
 	public final List<Symbol<?>> symbols = new ArrayList<>();
 	public final List<Symbol<?>> symbolsWithClock = new ArrayList<>();
 	public final List<Rule> transformationRules = new ArrayList<>();
 
-	public MetaModelInstance(Symbol<Integer> clockSymbol) {
-		this.clockSymbol = clockSymbol;
-		if(clockSymbol != null) {
-			this.symbolsWithClock.add(clockSymbol);
-		}
+	public MetaModelInstance() {
+		this.symbolsWithClock.add(clockSymbol);
 	}
 	public abstract ModelInitializer createInitializer(Model model);
 	public abstract AutomatonInstance createAutomaton();

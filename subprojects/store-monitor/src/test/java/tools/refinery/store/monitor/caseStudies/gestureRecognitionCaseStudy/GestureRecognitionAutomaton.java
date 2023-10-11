@@ -1,7 +1,7 @@
 package tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy;
 
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
-import tools.refinery.store.monitor.internal.model.Guard;
+import tools.refinery.store.monitor.internal.guards.Guard;
 import tools.refinery.store.monitor.internal.model.State;
 import tools.refinery.store.query.term.NodeVariable;
 

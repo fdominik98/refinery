@@ -1,4 +1,4 @@
-package tools.refinery.store.monitor.actions;
+package tools.refinery.store.monitor.actionLiterals;
 
 import tools.refinery.store.dse.transition.actions.ActionLiteral;
 import tools.refinery.store.dse.transition.actions.BoundActionLiteral;
@@ -6,7 +6,6 @@ import tools.refinery.store.model.Model;
 import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
-import tools.refinery.store.tuple.Tuple0;
 
 import java.util.List;
 

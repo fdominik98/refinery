@@ -10,6 +10,8 @@ public final class SenderReceiverInitializer extends ModelInitializer {
 	public final Tuple1 message1;
 	public final Tuple1 message2;
 	public final Tuple1 message3;
+	public final Tuple1 message4;
+	public final Tuple1 message5;
 	public final Tuple1 sender;
 	public final Tuple1 receiver;
 	public final Tuple1 router1;
@@ -43,6 +45,8 @@ public final class SenderReceiverInitializer extends ModelInitializer {
 		message1 = modificationAdapter.createObject();
 		message2 = modificationAdapter.createObject();
 		message3 = modificationAdapter.createObject();
+		message4 = modificationAdapter.createObject();
+		message5 = modificationAdapter.createObject();
 		router1 = modificationAdapter.createObject();
 		router2 = modificationAdapter.createObject();
 		router3 = modificationAdapter.createObject();
@@ -59,6 +63,8 @@ public final class SenderReceiverInitializer extends ModelInitializer {
 		messageInterpretation.put(message1, true);
 		messageInterpretation.put(message2, true);
 		messageInterpretation.put(message3, true);
+		messageInterpretation.put(message4, true);
+		messageInterpretation.put(message5, true);
 		receiverInterpretation.put(receiver, true);
 		senderInterpretation.put(sender, true);
 

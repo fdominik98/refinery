@@ -1,6 +1,9 @@
 package tools.refinery.store.monitor.caseStudies.senderReceiverCaseStudy;
 
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
+import tools.refinery.store.monitor.internal.actions.ClockResetAction;
+import tools.refinery.store.monitor.internal.guards.ClockGreaterThanTimeConstraint;
+import tools.refinery.store.monitor.internal.guards.Guard;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.query.dnf.Query;
 import tools.refinery.store.query.term.Variable;
@@ -38,7 +41,7 @@ public class SenderReceiverAutomaton extends AutomatonInstance {
 			);
 		}));
 
-		var timeoutGuard = Guard.of(new ClockGreaterThanTimeConstraint(clock1, 5));
+		var timeoutGuard = Guard.of(new ClockGreaterThanTimeConstraint(clock1, 10));
 
 		stateMachine.createTransition(stateMachine.startState, sendGuard, sent, new ClockResetAction(clock1));
 		stateMachine.createTransition(sent, doneGuard, done);

@@ -2,7 +2,8 @@ package tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy;
 
 import tools.refinery.store.dse.transition.Rule;
 import tools.refinery.store.model.Model;
-import tools.refinery.store.monitor.actions.IncreaseVectorActionLiteral;
+import tools.refinery.store.monitor.actionLiterals.IncreaseIntegerActionLiteral;
+import tools.refinery.store.monitor.actionLiterals.IncreaseVectorActionLiteral;
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
 import tools.refinery.store.monitor.caseStudies.ModelInitializer;
@@ -59,7 +60,7 @@ public class GestureRecognitionMetaModel extends MetaModelInstance {
 	public AnySymbolView handMovedUpView = new KeyOnlyView<>(handMovedUpSymbol);
 
 	public GestureRecognitionMetaModel(){
-		super(null);
+		super();
 		addSymbol(bodySymbol);
 		addSymbol(rightHandSymbol);
 		addSymbol(rightElbowSymbol);
@@ -71,14 +72,16 @@ public class GestureRecognitionMetaModel extends MetaModelInstance {
 			builder.clause(handCondition(false).call(body, hand))
 					.action(
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, -1)),
-							remove(handMovedUpSymbol, body, hand)
+							remove(handMovedUpSymbol, body, hand),
+							new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 					);
 		});
 		var moveHandUpRule = Rule.of("MoveHandUpRule", (builder, body, hand) -> {
 			builder.clause(handCondition(true).call(body, hand))
 					.action(
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
-							add(handMovedUpSymbol, body, hand)
+							add(handMovedUpSymbol, body, hand),
+							new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 					);
 		});
 		var moveElbowDownRule = Rule.of("MoveElbowDownRule", (builder, body, elbow, hand) -> {
@@ -86,7 +89,8 @@ public class GestureRecognitionMetaModel extends MetaModelInstance {
 					.action(
 							new IncreaseVectorActionLiteral(rightElbowSymbol, List.of(body, elbow), Vector.of(0, -1)),
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, -1)),
-							remove(handMovedUpSymbol, body, hand)
+							remove(handMovedUpSymbol, body, hand),
+							new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 					);
 		});
 		var moveElbowUpRule = Rule.of("MoveElbowUpRule", (builder, body, elbow, hand) -> {
@@ -94,7 +98,8 @@ public class GestureRecognitionMetaModel extends MetaModelInstance {
 					.action(
 							new IncreaseVectorActionLiteral(rightElbowSymbol, List.of(body, elbow), Vector.of(0, 1)),
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
-							add(handMovedUpSymbol, body, hand)
+							add(handMovedUpSymbol, body, hand),
+							new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 					);
 		});
 
@@ -110,7 +115,8 @@ public class GestureRecognitionMetaModel extends MetaModelInstance {
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, -1)),
 							new IncreaseVectorActionLiteral(rightShoulderSymbol,
 									List.of(body, shoulder), Vector.of(0,-1)),
-							remove(handMovedUpSymbol, body, hand)
+							remove(handMovedUpSymbol, body, hand),
+							new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 					);
 		});
 		var moveShoulderUpRule = Rule.of("MoveShoulderUpRule", builder -> {
@@ -125,7 +131,8 @@ public class GestureRecognitionMetaModel extends MetaModelInstance {
 							new IncreaseVectorActionLiteral(rightHandSymbol, List.of(body, hand), Vector.of(0, 1)),
 							new IncreaseVectorActionLiteral(rightShoulderSymbol,
 									List.of(body, shoulder), Vector.of(0,1)),
-							add(handMovedUpSymbol, body, hand)
+							add(handMovedUpSymbol, body, hand),
+							new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 					);
 		});
 

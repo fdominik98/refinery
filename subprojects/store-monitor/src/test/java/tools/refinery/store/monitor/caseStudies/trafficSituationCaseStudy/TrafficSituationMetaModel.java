@@ -2,6 +2,7 @@ package tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy;
 
 import tools.refinery.store.dse.transition.Rule;
 import tools.refinery.store.model.Model;
+import tools.refinery.store.monitor.actionLiterals.IncreaseIntegerActionLiteral;
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
 import tools.refinery.store.monitor.caseStudies.ModelInitializer;
@@ -36,7 +37,7 @@ public final class TrafficSituationMetaModel extends MetaModelInstance {
 	public Symbol<Boolean> pedestrianSymbol = Symbol.of("Pedestrian", 1);
 
 	public TrafficSituationMetaModel(){
-		super(null);
+		super();
 
 		addSymbol(cellSymbol);
 		addSymbol(southOfSymbol);
@@ -67,7 +68,8 @@ public final class TrafficSituationMetaModel extends MetaModelInstance {
 				)
 				.action(
 						remove(onCellSymbol, a1, c1),
-						add(onCellSymbol, a1, c2)
+						add(onCellSymbol, a1, c2),
+						new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 				)
 		);
 

@@ -5,23 +5,19 @@ import tools.refinery.store.dse.transition.objectives.CriterionCalculator;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.monitor.internal.model.Monitor;
 import tools.refinery.store.tuple.Tuple;
-import tools.refinery.store.tuple.Tuple0;
 
-public class MonitorAcceptStateCriterion implements Criterion{
+public class MonitorFitnessAcceptCriterion implements Criterion{
 
 	private final Monitor monitor;
-	private final boolean negated;
 
-	public MonitorAcceptStateCriterion(Monitor monitor, boolean negated) {
+	public MonitorFitnessAcceptCriterion(Monitor monitor) {
 		this.monitor = monitor;
-		this.negated = negated;
 	}
 
 	@Override
 	public CriterionCalculator createCalculator(Model model) {
 		var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
-		return () -> negated ?
-				(fitnessInterpretation.get(Tuple.of()) > 1) :
-				(fitnessInterpretation.get(Tuple.of()) <= 1);
+		Double fitness = fitnessInterpretation.get(Tuple.of());
+		return () -> fitness != null && fitness <= 1;
 	}
 }

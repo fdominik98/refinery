@@ -1,5 +1,8 @@
 package tools.refinery.store.monitor.internal.model;
 
+import tools.refinery.store.monitor.internal.actions.ClockResetAction;
+import tools.refinery.store.monitor.internal.guards.Guard;
+
 import java.util.*;
 
 public class StateMachine {

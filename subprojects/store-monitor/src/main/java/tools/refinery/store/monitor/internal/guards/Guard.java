@@ -1,5 +1,6 @@
-package tools.refinery.store.monitor.internal.model;
+package tools.refinery.store.monitor.internal.guards;
 
+import tools.refinery.store.monitor.internal.model.TimeConstraint;
 import tools.refinery.store.query.dnf.RelationalQuery;
 
 public class Guard {

@@ -2,7 +2,8 @@ package tools.refinery.store.monitor.caseStudies.senderReceiverCaseStudy;
 
 import tools.refinery.store.dse.transition.Rule;
 import tools.refinery.store.model.Model;
-import tools.refinery.store.monitor.actions.IncreaseIntegerActionLiteral;
+import tools.refinery.store.monitor.actionLiterals.IncreaseIntegerActionLiteral;
+import tools.refinery.store.monitor.actionLiterals.RandomTransmitMessageActionLiteral;
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
 import tools.refinery.store.monitor.caseStudies.ModelInitializer;
@@ -36,8 +37,8 @@ public final class SenderReceiverMetaModel extends MetaModelInstance {
 	public Symbol<Boolean> atSymbol = Symbol.of("at", 2);
 	public AnySymbolView atView = new KeyOnlyView<>(atSymbol);
 
-	public SenderReceiverMetaModel(Symbol<Integer> clockSymbol){
-		super(clockSymbol);
+	public SenderReceiverMetaModel(){
+		super();
 		addSymbol(messageSymbol);
 		addSymbol(senderSymbol);
 		addSymbol(receiverSymbol);
@@ -89,8 +90,7 @@ public final class SenderReceiverMetaModel extends MetaModelInstance {
 						doneView.call(CallPolarity.NEGATIVE, message, message)
 				)
 				.action(
-						remove(atSymbol, message, router1),
-						add(atSymbol, message, router2),
+						new RandomTransmitMessageActionLiteral(atSymbol, message, router1, router2, 0.8),
 						new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 				)
 		);

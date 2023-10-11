@@ -23,7 +23,6 @@ import tools.refinery.store.tuple.Tuple;
 import java.util.*;
 import java.util.function.Consumer;
 import static tools.refinery.store.query.literal.Literals.check;
-import static tools.refinery.store.query.term.int_.IntTerms.*;
 
 public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMonitorStoreAdapterImpl>
 		implements ModelMonitorBuilder{
@@ -142,7 +141,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 						if (!t.to.isTrap() && !(fromStateSymbol == monitor.getStartSymbol().symbol
 										&& toStateInterpretation.get(res) != toStateSymbol.defaultValue())) {
 							ClockHolder clockHolder = new ClockHolder(cursor.getValue());
-							clockHolder.reset(t.action.clocksToReset, now);
+							t.action.execute(clockHolder, now);
 							toStateInterpretation.put(res, clockHolder);
 						}
 						if (t.to.isAccept()) {

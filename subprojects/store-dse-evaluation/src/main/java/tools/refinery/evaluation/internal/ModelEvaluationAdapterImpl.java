@@ -101,8 +101,12 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 	}
 
 	@Override
-	public EvaluationResult getEvaluationResult(EvaluationStore evaluationStore, List<Symbol<?>> symbols) {
-		return new EvaluationResult(evaluationStore.getTimeSpan(),
+	public EvaluationResult getEvaluationResult(EvaluationStore evaluationStore,
+												int solutionNumber, List<Symbol<?>> symbols) {
+		return new EvaluationResult(
+				evaluationStore.getTrajectories().size(),
+				solutionNumber,
+				evaluationStore.getTimeSpan(),
 				evaluateAccuracy(evaluationStore),
 				evaluateDiversity(evaluationStore, symbols));
 	}

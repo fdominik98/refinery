@@ -1,16 +1,18 @@
-package tools.refinery.store.monitor.internal.model;
+package tools.refinery.store.monitor.internal.guards;
 
+import tools.refinery.store.monitor.internal.model.Clock;
+import tools.refinery.store.monitor.internal.model.TimeConstraint;
 import tools.refinery.store.monitor.internal.terms.ClockValueTerm;
 import tools.refinery.store.query.term.DataVariable;
 import tools.refinery.store.query.term.Term;
 import static tools.refinery.store.query.term.int_.IntTerms.*;
 
-public class ClockLessOrEqThanTimeConstraint extends TimeConstraint{
-	public ClockLessOrEqThanTimeConstraint(Clock clock, int value) {
+public class ClockEqTimeConstraint extends TimeConstraint {
+	public ClockEqTimeConstraint(Clock clock, int value) {
 		super(clock, value);
 	}
 	@Override
 	public Term<Boolean> getTerm(DataVariable<Integer> now, ClockValueTerm time) {
-		return less(sub(now, time), constant(timeSpan));
+		return eq(sub(now, time), constant(timeSpan));
 	}
 }

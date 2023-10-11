@@ -1,11 +1,13 @@
-package tools.refinery.store.monitor.internal.model;
+package tools.refinery.store.monitor.internal.guards;
 
+import tools.refinery.store.monitor.internal.model.Clock;
+import tools.refinery.store.monitor.internal.model.TimeConstraint;
 import tools.refinery.store.monitor.internal.terms.ClockValueTerm;
 import tools.refinery.store.query.term.DataVariable;
 import tools.refinery.store.query.term.Term;
 import static tools.refinery.store.query.term.int_.IntTerms.*;
 
-public class ClockLessThanTimeConstraint extends TimeConstraint{
+public class ClockLessThanTimeConstraint extends TimeConstraint {
 	public ClockLessThanTimeConstraint(Clock clock, int value) {
 		super(clock, value);
 	}

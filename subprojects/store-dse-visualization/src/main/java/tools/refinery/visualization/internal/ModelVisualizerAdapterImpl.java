@@ -18,6 +18,8 @@ import tools.refinery.visualization.ModelVisualizerStoreAdapter;
 import tools.refinery.visualization.statespace.VisualizationStore;
 
 import java.io.*;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -347,6 +349,34 @@ public class ModelVisualizerAdapterImpl implements ModelVisualizerAdapter {
 	public void visualize(VisualizationStore visualizationStore) {
 		this.designSpaceBuilder.append(visualizationStore.getDesignSpaceStringBuilder());
 		this.states.putAll(visualizationStore.getStates());
-		renderDesignSpace(outputPath, formats);
+		String newPath = outputPath + "Temp";
+		renderDesignSpace(newPath, formats);
+
+		Path oldDirPath = Paths.get(outputPath);
+		Path newDirPath = Paths.get(newPath);
+		replaceOldOutput(oldDirPath, newDirPath);
+	}
+
+	private void replaceOldOutput(Path oldDirPath, Path newDirPath) {
+		try {
+			if(Files.exists(oldDirPath)){
+				Files.walkFileTree(oldDirPath, new SimpleFileVisitor<>() {
+					@Override
+					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+						Files.delete(file);
+						return FileVisitResult.CONTINUE;
+					}
+
+					@Override
+					public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+						Files.delete(dir);
+						return FileVisitResult.CONTINUE;
+					}
+				});
+			}
+			Files.move(newDirPath, oldDirPath);
+		}catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

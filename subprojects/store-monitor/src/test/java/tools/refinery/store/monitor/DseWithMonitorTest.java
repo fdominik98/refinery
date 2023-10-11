@@ -11,17 +11,16 @@ import tools.refinery.store.dse.strategy.BestFirstStoreManager;
 import tools.refinery.store.dse.transition.DesignSpaceExplorationAdapter;
 import tools.refinery.store.model.ModelStore;
 import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
-import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy.GestureRecognitionMetaModel;
 import tools.refinery.store.monitor.internal.StateMachineTraversal;
 import tools.refinery.store.monitor.internal.objectives.DummyRandomObjective;
-import tools.refinery.store.monitor.internal.objectives.MonitorFitnessCriterion;
+import tools.refinery.store.monitor.internal.objectives.MonitorFitnessAcceptCriterion;
+import tools.refinery.store.monitor.internal.objectives.MonitorFitnessExcludeCriterion;
 import tools.refinery.store.monitor.internal.objectives.MonitorBasedObjective;
 import tools.refinery.store.monitor.caseStudies.senderReceiverCaseStudy.SenderReceiverMetaModel;
 import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationMetaModel;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.query.interpreter.QueryInterpreterAdapter;
-import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.statecoding.StateCoderAdapter;
 import tools.refinery.store.tuple.Tuple;
 import tools.refinery.visualization.ModelVisualizerAdapter;
@@ -34,46 +33,52 @@ class DseWithMonitorTest {
 	//@Disabled("This test is only for debugging purposes")
 	void TrafficSituationTest() {
 		var metaModel = new TrafficSituationMetaModel();
-		runTrajectoryGenerations(metaModel, true, "traffic_test_output", 100, 0, 1, true);
+		/*int[] solutions = {1000};
+		int[] warmUps = {0};
+		runTrajectoryGenerations(metaModel, true,
+				"trafficTestOutput", solutions,
+				warmUps,1,
+				true);*/
+
+		int[] solutions = {50, 100, 500, 1000};
+		int[] warmUps = {20, 0, 0, 0};
+		runTrajectoryGenerations(metaModel, false,
+				null, solutions,
+				warmUps,30,	false, 15);
 	}
 
 	@Test
 		//@Disabled("This test is only for debugging purposes")
 	void GestureRecognitionTest() {
 		var metaModel = new GestureRecognitionMetaModel();
-		var results = runTrajectoryGenerations(metaModel, true,
-				"gesture_test_output", 100, 0, 1, true);
-		System.out.println(results);
+		int[] solutions = {50};
+		int[] warmUps = {0};
+		runTrajectoryGenerations(metaModel, true,
+				"gestureTestOutput", solutions,
+				warmUps,1,true, 15);
 	}
 
 	@Test
 		//@Disabled("This test is only for debugging purposes")
 	void SenderReceiverTest() {
-		//runTrajectoryGenerations(metaModel, true, "sender_receiver_test_output",
-		//		1000, 0, 1);
+		var metaModel = new SenderReceiverMetaModel();
 
-		var medTimeSpans = new ModelEvaluationAdapter.EvaluationResultContainer();
-		var medAccuracy = new ModelEvaluationAdapter.EvaluationResultContainer();
-		var medDiversity = new ModelEvaluationAdapter.EvaluationResultContainer();
+		int[] solutions = {100};
+		int[] warmUps = {0};
+		runTrajectoryGenerations(metaModel, true,
+				"senderReceiverTestOutput", solutions,
+				warmUps,1,true, 15);
 
-		int[] solutions = {50, 100, 500, 1000};
+		/*int[] solutions = {50, 100, 500, 1000};
 		int[] warmUps = {20, 0, 0, 0};
-
-		for(int i = 0; i < solutions.length; i++) {
-			Symbol<Integer> clockSymbol = Symbol.of("Clock", 0, Integer.class);
-			var metaModel = new SenderReceiverMetaModel(clockSymbol);
-			var res = runTrajectoryGenerations(metaModel, false, null, solutions[i], warmUps[i], 30, false);
-			medTimeSpans.add(res.medianByTimeSpan());
-			medAccuracy.add(res.medianByAccuracy());
-			medDiversity.add(res.medianByDiversity());
-		}
-		System.out.println(medTimeSpans);
-		System.out.println(medAccuracy);
-		System.out.println(medDiversity);
+		runTrajectoryGenerations(metaModel, false,
+				null, solutions,
+				warmUps,30,	false);*/
 	}
 
 	private ModelEvaluationAdapter.EvaluationResult runTrajectoryGeneration(
-			MetaModelInstance metaModel, boolean visualization, String outPath, int solutions, boolean guided) {
+			MetaModelInstance metaModel, boolean visualization, String outPath, int solutionNumber, boolean guided,
+			int timeOut) {
 
 		StateMachineTraversal traverser = new StateMachineTraversal(metaModel.createAutomaton().stateMachine);
 
@@ -83,8 +88,8 @@ class DseWithMonitorTest {
 
 		if(guided) {
 			designSpaceExplorationAdapterBuilder
-					.exclude(new MonitorFitnessCriterion(traverser.monitor, true))
-					.accept(new MonitorFitnessCriterion(traverser.monitor, false))
+					.exclude(new MonitorFitnessExcludeCriterion(traverser.monitor, metaModel.clockSymbol, timeOut))
+					.accept(new MonitorFitnessAcceptCriterion(traverser.monitor))
 					.objective(new MonitorBasedObjective(traverser.monitor));
 		}
 		else {
@@ -124,38 +129,47 @@ class DseWithMonitorTest {
 			clockInterpretation.put(Tuple.of(), 0);
 		}
 
-		ModelInitializer initializer = metaModel.createInitializer(model);
+		metaModel.createInitializer(model);
 		monitorAdapter.init();
 		var initialVersion = model.commit();
 		queryEngine.flushChanges();
 
-		var bestFirst = new BestFirstStoreManager(store, solutions);
+		var bestFirst = new BestFirstStoreManager(store, solutionNumber);
 		bestFirst.startExploration(initialVersion);
-		var resultStore = bestFirst.getSolutionStore();
-		System.out.println("states size: " + resultStore.getSolutions().size());
 
 		if (visualization) {
 			model.getAdapter(ModelVisualizerAdapter.class).visualize(bestFirst.getVisualizationStore());
 		}
 
-		var evaluationStore = bestFirst.getEvaluationStore();
-		return evaluationAdapter.getEvaluationResult(evaluationStore, metaModel.symbols);
+		return evaluationAdapter.getEvaluationResult( bestFirst.getEvaluationStore(),
+				bestFirst.getSolutionStore().getSolutions().size(), metaModel.symbols);
 	}
 
-	private ModelEvaluationAdapter.EvaluationResultContainer runTrajectoryGenerations(
-			MetaModelInstance metaModel, boolean visualization, String outPath, int solutions, int warmUp,
-			int measurements, boolean guided) {
+	private void runTrajectoryGenerations(
+			MetaModelInstance metaModel, boolean visualization, String outPath, int[] solutions, int[] warmUps,
+			int measurements, boolean guided, int timeOut) {
 
-		var evaluationResults = new	ModelEvaluationAdapter.EvaluationResultContainer();
+		var medTimeSpans = new ModelEvaluationAdapter.EvaluationResultContainer();
+		var medAccuracy = new ModelEvaluationAdapter.EvaluationResultContainer();
+		var medDiversity = new ModelEvaluationAdapter.EvaluationResultContainer();
 
-		for(int i = 0; i < warmUp; i++) {
-			runTrajectoryGeneration(metaModel, visualization, outPath, solutions, guided);
+		for(int i = 0; i < solutions.length; i++) {
+			var evaluationResults = new	ModelEvaluationAdapter.EvaluationResultContainer();
+
+			for(int j = 0; j < warmUps[i]; j++) {
+				runTrajectoryGeneration(metaModel, visualization, outPath, solutions[i], guided, timeOut);
+			}
+
+			for(int j = 0; j < measurements; j++) {
+				evaluationResults.add(runTrajectoryGeneration(metaModel, visualization, outPath, solutions[i], guided
+						, timeOut));
+			}
+			medTimeSpans.add(evaluationResults.medianByTimeSpan());
+			medAccuracy.add(evaluationResults.medianByAccuracy());
+			medDiversity.add(evaluationResults.medianByDiversity());
 		}
-
-		for(int i = 0; i < measurements; i++) {
-			evaluationResults.add(runTrajectoryGeneration(metaModel, visualization, outPath, solutions, guided));
-		}
-
-		return evaluationResults;
+		System.out.println(medTimeSpans);
+		System.out.println(medAccuracy);
+		System.out.println(medDiversity);
 	}
 }

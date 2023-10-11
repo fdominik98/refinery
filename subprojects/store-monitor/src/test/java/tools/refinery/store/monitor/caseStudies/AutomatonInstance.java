@@ -2,7 +2,7 @@ package tools.refinery.store.monitor.caseStudies;
 
 import tools.refinery.store.monitor.internal.model.StateMachine;
 
-public class AutomatonInstance {
+public abstract class AutomatonInstance {
 	public final StateMachine stateMachine;
 
 	public AutomatonInstance(double weight)  {

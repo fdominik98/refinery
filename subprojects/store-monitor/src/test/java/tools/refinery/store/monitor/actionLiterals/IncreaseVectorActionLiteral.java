@@ -1,4 +1,4 @@
-package tools.refinery.store.monitor.actions;
+package tools.refinery.store.monitor.actionLiterals;
 
 import tools.refinery.store.dse.transition.actions.ActionLiteral;
 import tools.refinery.store.dse.transition.actions.BoundActionLiteral;
