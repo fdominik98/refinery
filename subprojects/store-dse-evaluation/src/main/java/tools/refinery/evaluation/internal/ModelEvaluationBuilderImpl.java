@@ -15,16 +15,16 @@ public class ModelEvaluationBuilderImpl
 		extends AbstractModelAdapterBuilder<ModelEvaluationStoreAdapterImpl>
 		implements ModelEvaluationBuilder {
 
-	private Symbol<Boolean> acceptanceSymbol;
+	private Symbol<Boolean> inAcceptSymbol;
 
 	@Override
 	protected ModelEvaluationStoreAdapterImpl doBuild(ModelStore store) {
-		return new ModelEvaluationStoreAdapterImpl(store, acceptanceSymbol);
+		return new ModelEvaluationStoreAdapterImpl(store, inAcceptSymbol);
 	}
 
 	@Override
-	public ModelAdapterBuilder acceptanceSymbol(Symbol<Boolean> acceptanceSymbol) {
-		this.acceptanceSymbol = acceptanceSymbol;
+	public ModelAdapterBuilder inAcceptSymbolSymbol(Symbol<Boolean> inAcceptSymbol) {
+		this.inAcceptSymbol = inAcceptSymbol;
 		return this;
 	}
 }

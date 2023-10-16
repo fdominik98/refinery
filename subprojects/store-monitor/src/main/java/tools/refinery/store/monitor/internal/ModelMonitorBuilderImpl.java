@@ -64,6 +64,7 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 		storeBuilder.symbols(monitor.symbolList);
 		storeBuilder.symbol(monitor.fitnessSymbol);
 		storeBuilder.symbol(monitor.acceptanceSymbol);
+		storeBuilder.symbol(monitor.inAcceptSymbol);
 
 		for (Transition t : monitor.stateMachine.transitions) {
 			for(List<NodeVariable> fromParamList : monitor.get(t.from).keySet()){
@@ -144,10 +145,6 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 							t.action.execute(clockHolder, now);
 							toStateInterpretation.put(res, clockHolder);
 						}
-						if (t.to.isAccept()) {
-							var acceptInterpretation = model.getInterpretation(monitor.acceptanceSymbol);
-							acceptInterpretation.put(Tuple.of(), true);
-						}
 					}
 				};
 				actionSet.add(action);
@@ -160,20 +157,31 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 		};
 		actionSet.add(flushAction);
 
-		Consumer<Model> fitnessActon = (model) -> {
+		Consumer<Model> afterAction = (model) -> {
 			var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 			double weightSum = 0;
+			boolean inAccept = false;
 
 			for(State s : monitor.stateMachine.states) {
 				for(var entry : monitor.get(s).entrySet()) {
 					var resultSet = queryEngine.getResultSet(entry.getValue().query);
 					weightSum += resultSet.size() * s.weight;
+					if(s.isAccept() && resultSet.size() > 0) {
+						inAccept = true;
+					}
 				}
 			}
 			var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
 			fitnessInterpretation.put(Tuple.of(), 1 / (weightSum + 1));
+
+			var inAcceptInterpretation = model.getInterpretation(monitor.inAcceptSymbol);
+			inAcceptInterpretation.put(Tuple.of(), inAccept);
+			if(inAccept) {
+				var acceptanceInterpretation = model.getInterpretation(monitor.acceptanceSymbol);
+				acceptanceInterpretation.put(Tuple.of(), true);
+			}
 		};
-		actionSet.add(fitnessActon);
+		actionSet.add(afterAction);
 		actionSet.add(flushAction);
 
 		var queryBuilder = storeBuilder.getAdapter(ModelQueryBuilder.class);
@@ -183,8 +191,9 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 		if(stateCoderOpt.isPresent()) {
 			var stateCoder = stateCoderOpt.get();
 			stateCoder.excludeAll(monitor.symbolList);
-			stateCoder.excludeAll(monitor.acceptanceSymbol);
+			stateCoder.exclude(monitor.acceptanceSymbol);
 			stateCoder.exclude(monitor.fitnessSymbol);
+			stateCoder.exclude(monitor.inAcceptSymbol);
 		}
 	}
 }

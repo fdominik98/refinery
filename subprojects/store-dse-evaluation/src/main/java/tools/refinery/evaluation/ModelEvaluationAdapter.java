@@ -15,7 +15,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public interface ModelEvaluationAdapter extends ModelAdapter {
-	record EvaluationResult (int trajectories, int solutions, long timeSpan,double accuracy,double diversity){}
+	record EvaluationResult (int trajectories, int solutions, long timeSpan, double accuracy,double diversity){}
 
 	class EvaluationResultContainer extends ArrayList<EvaluationResult> {
 		private EvaluationResult calculateMedian(Comparator comp){
@@ -59,11 +59,6 @@ public interface ModelEvaluationAdapter extends ModelAdapter {
 	static ModelEvaluationBuilder builder() {
 		return new ModelEvaluationBuilderImpl();
 	}
-
-	double evaluateAccuracy(EvaluationStore evaluationStore);
-
-	double evaluateDiversity(EvaluationStore evaluationStore,
-											   List<Symbol<?>> symbols);
 
 	double distance(ObjectCodeImpl objectCode1, ObjectCodeImpl objectCode2);
 

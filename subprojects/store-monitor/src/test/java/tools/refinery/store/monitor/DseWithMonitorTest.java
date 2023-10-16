@@ -15,7 +15,6 @@ import tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy.Gest
 import tools.refinery.store.monitor.internal.StateMachineTraversal;
 import tools.refinery.store.monitor.internal.objectives.DummyRandomObjective;
 import tools.refinery.store.monitor.internal.objectives.MonitorFitnessAcceptCriterion;
-import tools.refinery.store.monitor.internal.objectives.MonitorFitnessExcludeCriterion;
 import tools.refinery.store.monitor.internal.objectives.MonitorBasedObjective;
 import tools.refinery.store.monitor.caseStudies.senderReceiverCaseStudy.SenderReceiverMetaModel;
 import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationMetaModel;
@@ -51,7 +50,7 @@ class DseWithMonitorTest {
 		//@Disabled("This test is only for debugging purposes")
 	void GestureRecognitionTest() {
 		var metaModel = new GestureRecognitionMetaModel();
-		int[] solutions = {50};
+		int[] solutions = {20};
 		int[] warmUps = {0};
 		runTrajectoryGenerations(metaModel, true,
 				"gestureTestOutput", solutions,
@@ -88,8 +87,8 @@ class DseWithMonitorTest {
 
 		if(guided) {
 			designSpaceExplorationAdapterBuilder
-					.exclude(new MonitorFitnessExcludeCriterion(traverser.monitor, metaModel.clockSymbol, timeOut))
-					.accept(new MonitorFitnessAcceptCriterion(traverser.monitor))
+					//.exclude(new MonitorFitnessExcludeCriterion(traverser.monitor, metaModel.clockSymbol, timeOut))
+					.accept(new MonitorFitnessAcceptCriterion(traverser.monitor, metaModel.clockSymbol, timeOut))
 					.objective(new MonitorBasedObjective(traverser.monitor));
 		}
 		else {
@@ -106,7 +105,7 @@ class DseWithMonitorTest {
 						.clock(metaModel.clockSymbol)
 						.withStateQueries())
 				.with(ModelEvaluationAdapter.builder()
-						.acceptanceSymbol(traverser.monitor.acceptanceSymbol))
+						.inAcceptSymbolSymbol(traverser.monitor.inAcceptSymbol))
 				.with(designSpaceExplorationAdapterBuilder);
 		if (visualization) {
 			storeBuilder.with(ModelVisualizerAdapter.builder()

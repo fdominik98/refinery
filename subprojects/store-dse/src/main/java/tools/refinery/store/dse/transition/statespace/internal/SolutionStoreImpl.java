@@ -26,6 +26,7 @@ public class SolutionStoreImpl implements SolutionStore {
 
 	@Override
 	public synchronized boolean submit(VersionWithObjectiveValue version) {
+		System.out.println(solutions.size());
 		boolean removeLast = hasEnoughSolution();
 		solutions.add(version);
 		if(removeLast) {

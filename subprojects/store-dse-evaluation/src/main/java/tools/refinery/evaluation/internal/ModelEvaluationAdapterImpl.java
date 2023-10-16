@@ -6,8 +6,6 @@
 package tools.refinery.evaluation.internal;
 
 import org.eclipse.collections.api.factory.primitive.IntSets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import tools.refinery.evaluation.ModelEvaluationStoreAdapter;
 import tools.refinery.evaluation.statespace.EvaluationStore;
 import tools.refinery.store.map.Version;
@@ -16,9 +14,8 @@ import tools.refinery.evaluation.ModelEvaluationAdapter;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.statecoding.neighbourhood.ObjectCodeImpl;
 import tools.refinery.store.tuple.Tuple;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 	public enum EvaluationState {
@@ -28,25 +25,20 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		COMPLETED
 	}
 
-	private static final Logger LOG = LoggerFactory.getLogger(ModelEvaluationAdapterImpl.class);
-
 	private final Model model;
 	private final ModelEvaluationStoreAdapterImpl storeAdapter;
-	private final Symbol<Boolean> acceptanceSymbol;
-
+	private final Symbol<Boolean> inAcceptSymbol;
 	private EvaluationState evaluationState;
-
 	private long startTime;
 	private long pauseTime;
 	private long pauseTimeSpan;
 	private long timeSpan;
 
 
-	public ModelEvaluationAdapterImpl(Model model, ModelEvaluationStoreAdapterImpl storeAdapter, Symbol<Boolean> acceptanceSymbol) {
+	public ModelEvaluationAdapterImpl(Model model, ModelEvaluationStoreAdapterImpl storeAdapter, Symbol<Boolean> inAcceptSymbol) {
 		this.model = model;
 		this.storeAdapter = storeAdapter;
-		this.acceptanceSymbol = acceptanceSymbol;
-
+		this.inAcceptSymbol = inAcceptSymbol;
 		this.evaluationState = EvaluationState.NOT_STARTED;
 		this.pauseTime = 0;
 		this.startTime = 0;
@@ -103,6 +95,7 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 	@Override
 	public EvaluationResult getEvaluationResult(EvaluationStore evaluationStore,
 												int solutionNumber, List<Symbol<?>> symbols) {
+		evaluationStore.convertToTrajectoryPaths();
 		return new EvaluationResult(
 				evaluationStore.getTrajectories().size(),
 				solutionNumber,
@@ -121,8 +114,7 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		return storeAdapter;
 	}
 
-	@Override
-	public double evaluateAccuracy(EvaluationStore evaluationStore) {
+	private double evaluateAccuracy(EvaluationStore evaluationStore) {
 		double acceptedTrajectories = 0;
 		for(var trajectory : evaluationStore.getTrajectories()) {
 			if(isAccepted(trajectory)) {
@@ -136,8 +128,8 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		var currentVersion = model.getState();
 		for(Version version : trajectory) {
 			model.restore(version);
-			var acceptanceInterpretation = model.getInterpretation(acceptanceSymbol);
-			if(acceptanceInterpretation.get(Tuple.of())) {
+			var inAcceptInterpretation = model.getInterpretation(inAcceptSymbol);
+			if(inAcceptInterpretation.get(Tuple.of())) {
 				model.restore(currentVersion);
 				return true;
 			}
@@ -146,8 +138,7 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		return false;
 	}
 
-	@Override
-	public double evaluateDiversity(EvaluationStore evaluationStore, List<Symbol<?>> symbols) {
+	private double evaluateDiversity(EvaluationStore evaluationStore, List<Symbol<?>> symbols) {
 		Map<Version, ObjectCodeImpl> versionCodeMap = constructVersionCodeMap(evaluationStore, symbols);
 		int numberOfTrajectories = evaluationStore.getTrajectories().size();
 		if (numberOfTrajectories <= 1) {
@@ -173,30 +164,64 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 	}
 	@Override
 	public double distance(ObjectCodeImpl objectCode1, ObjectCodeImpl objectCode2) {
-		var o1 = objectCode1.getSize() > objectCode2.getSize() ? objectCode1 : objectCode2;
-		var o2 = objectCode1 == o1 ? objectCode2 : objectCode1;
+		Map<Long, Integer> frequencyMap1 = new HashMap<>();
+		Map<Long, Integer> frequencyMap2 = new HashMap<>();
 
-		int sum = 0;
-		for(int i = 0; i < o1.getSize(); i++) {
-			long v1 = o1.get(i);
-			long v2 = o2.getSize() > i ? o2.get(i) : 0;
-			sum += Math.pow(v1 - v2, 2);
+		for (int i = 0; i < objectCode1.getSize(); i++) {
+			frequencyMap1.put(objectCode1.get(i), frequencyMap1.getOrDefault(objectCode1.get(i), 0) + 1);
 		}
-		return Math.sqrt(sum);
+
+		for (int i = 0; i < objectCode2.getSize(); i++) {
+			frequencyMap2.put(objectCode2.get(i), frequencyMap1.getOrDefault(objectCode2.get(i), 0) + 1);
+		}
+
+		int unpairedCount = 0;
+
+		// Iterate over the values in vector1 and check if they have a pair in vector2
+		for (int i = 0; i < objectCode1.getSize(); i++) {
+			int frequency1 = frequencyMap1.get(objectCode1.get(i));
+			int frequency2 = frequencyMap2.getOrDefault(objectCode1.get(i), 0);
+
+			if (frequency1 > frequency2) {
+				unpairedCount += frequency1 - frequency2; // Count the unpaired values
+				frequencyMap2.remove(objectCode1.get(i)); // Remove the paired values from vector2
+			} else if (frequency1 < frequency2) {
+				unpairedCount += frequency2 - frequency1; // Count the unpaired values
+				frequencyMap1.remove(objectCode1.get(i)); // Remove the paired values from vector1
+			} else {
+				// Both vectors have the same frequency for this value, remove from both
+				frequencyMap1.remove(objectCode1.get(i));
+				frequencyMap2.remove(objectCode1.get(i));
+			}
+		}
+
+		// Any remaining values in vector2 are unpaired
+		for (int frequency : frequencyMap2.values()) {
+			unpairedCount += frequency;
+		}
+
+		// Any remaining values in vector1 are unpaired
+		for (int frequency : frequencyMap1.values()) {
+			unpairedCount += frequency;
+		}
+
+		return unpairedCount;
 	}
 
 	private double distance(Map<Version,ObjectCodeImpl> versionCodeMap, List<Version> trajectory1,
 							List<Version> trajectory2) {
-		var t1 = trajectory1.size() > trajectory2.size() ? trajectory1 : trajectory2;
-		var t2 = trajectory1 == t1 ? trajectory2 : trajectory1;
+
+		if(trajectory1.size() != trajectory2.size()) {
+			throw  new IllegalArgumentException("Trajectory sizes do not match");
+		}
 
 		double sum = 0.0;
-		for (int i = 0; i < t1.size(); i++) {
-			var code1 = versionCodeMap.get(t1.get(i));
-			var code2 = t2.size() > i ? versionCodeMap.get(t2.get(i)) : new ObjectCodeImpl();
-			sum += distance(code1, code2);
+		for (int i = 0; i < trajectory1.size(); i++) {
+			var code1 = versionCodeMap.get(trajectory1.get(i));
+			var code2 = versionCodeMap.get(trajectory2.get(i));
+			sum += jaccardDistance(code1, code2);
 		}
-		return sum / t1.size();
+		return sum / trajectory1.size();
 	}
 
 	private Map<Version,ObjectCodeImpl> constructVersionCodeMap(EvaluationStore evaluationStore, List<Symbol<?>> symbols) {
@@ -218,5 +243,29 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		}
 		model.restore(currentVersion);
 		return versionCodeMap;
+	}
+
+	private static double jaccardDistance(ObjectCodeImpl objectCode1, ObjectCodeImpl objectCode2) {
+		Set<Long> set1 = new HashSet<>();
+		for (int i = 0; i < objectCode1.getSize(); i++) {
+			set1.add(objectCode1.get(i));
+		}
+		Set<Long> set2 = new HashSet<>();
+		for (int i = 0; i < objectCode2.getSize(); i++) {
+			set2.add(objectCode2.get(i));
+		}
+
+		// Calculate intersection size
+		Set<Long> intersection = new HashSet<>(set1);
+		intersection.retainAll(set2);
+
+		// Calculate union size
+		Set<Long> union = new HashSet<>(set1);
+		union.addAll(set2);
+
+		double jaccardSimilarity = (double) intersection.size() / union.size();
+
+		// Return Jaccard Distance
+		return 1.0 - jaccardSimilarity;
 	}
 }

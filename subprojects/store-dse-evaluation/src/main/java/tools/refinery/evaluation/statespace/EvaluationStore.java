@@ -7,11 +7,15 @@ package tools.refinery.evaluation.statespace;
 
 import tools.refinery.store.map.Version;
 import java.util.List;
+import java.util.Stack;
 
 public interface EvaluationStore {
 
-	void addModelVersion(Version oldVersion, Version newVersion);
-	List<List<Version>> getTrajectories();
+	List<Stack<Version>> convertToTrajectoryPaths();
 	long getTimeSpan();
 	void setTimeSpan(long timeSpan);
+
+	List<Stack<Version>> getTrajectories();
+
+	void addModelVersion(Version oldVersion, Version newVersion);
 }

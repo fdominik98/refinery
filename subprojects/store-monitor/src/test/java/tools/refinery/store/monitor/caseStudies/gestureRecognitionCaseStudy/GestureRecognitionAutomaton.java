@@ -21,7 +21,7 @@ public class GestureRecognitionAutomaton extends AutomatonInstance {
 		s2 = stateMachine.createState(3);
 		s3 = stateMachine.createState( 7);
 		s4 = stateMachine.createState(State.Type.ACCEPT, 10);
-		s5 = stateMachine.createState(5);
+		s5 = stateMachine.createState(0);
 		s6 = stateMachine.createState(State.Type.TRAP);
 
 		body =  NodeVariable.of("body");

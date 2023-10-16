@@ -14,11 +14,11 @@ import tools.refinery.store.representation.Symbol;
 public class ModelEvaluationStoreAdapterImpl implements ModelEvaluationStoreAdapter {
 	private final ModelStore store;
 
-	private final Symbol<Boolean> acceptanceSymbol;
+	private final Symbol<Boolean> inAcceptSymbol;
 
-	public ModelEvaluationStoreAdapterImpl(ModelStore store, Symbol<Boolean> acceptanceSymbol) {
+	public ModelEvaluationStoreAdapterImpl(ModelStore store, Symbol<Boolean> inAcceptSymbol) {
 		this.store = store;
-		this.acceptanceSymbol = acceptanceSymbol;
+		this.inAcceptSymbol = inAcceptSymbol;
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class ModelEvaluationStoreAdapterImpl implements ModelEvaluationStoreAdap
 
 	@Override
 	public ModelAdapter createModelAdapter(Model model) {
-		return new ModelEvaluationAdapterImpl(model, this, acceptanceSymbol);
+		return new ModelEvaluationAdapterImpl(model, this, inAcceptSymbol);
 	}
 
 }

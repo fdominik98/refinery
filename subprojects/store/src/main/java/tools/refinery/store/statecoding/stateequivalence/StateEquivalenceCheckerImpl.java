@@ -19,7 +19,6 @@ import tools.refinery.store.statecoding.Morphism;
 import tools.refinery.store.statecoding.ObjectCode;
 import tools.refinery.store.statecoding.StateEquivalenceChecker;
 import tools.refinery.store.tuple.Tuple;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

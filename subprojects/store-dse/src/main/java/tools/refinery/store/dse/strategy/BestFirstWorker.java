@@ -82,12 +82,14 @@ public class BestFirstWorker {
 				storeManager.solutionStore.submit(versionWithObjectiveValue);
 			}
 
+			pauseTimerIfPresent();
 			if (isVisualizationEnabled) {
 				visualizationStore.addState(last.version(), last.objectiveValue().toString());
 				if (accepted) {
 					visualizationStore.addSolution(last.version());
 				}
 			}
+			resumeTimerIfPresent();
 
 			return new SubmitResult(true, accepted, objectiveValue, last);
 		}
@@ -155,18 +157,18 @@ public class BestFirstWorker {
 			oldVersion = last.version();
 		}
 		var submitResult = submit();
-		 if ( submitResult.newVersion() != null) {
+		pauseTimerIfPresent();
+		if ( submitResult.newVersion() != null) {
 			 var newVersion = submitResult.newVersion().version();
 			 if (isVisualizationEnabled) {
-				visualizationStore.addTransition(oldVersion, newVersion,
+				 visualizationStore.addTransition(oldVersion, newVersion,
 					 visitResult.transformation().getDefinition().getName() + ", " + visitResult.activation());
- 			}
-			if(isEvaluationEnabled) {
-				evaluationAdapter.pause();
+			 }
+			 if(isEvaluationEnabled) {
 				evaluationStore.addModelVersion(oldVersion, newVersion);
-				evaluationAdapter.resume();
 			}
 		}
+		resumeTimerIfPresent();
 		return new RandomVisitResult(submitResult, visitResult.mayHaveMore());
 	}
 
@@ -177,6 +179,31 @@ public class BestFirstWorker {
 	private void checkSynchronized() {
 		if (last != null && !last.version().equals(model.getState())) {
 			throw new AssertionError("Worker is not synchronized with model state");
+		}
+	}
+
+
+	void startTimerIfPresent(){
+		if(isEvaluationEnabled) {
+			this.evaluationAdapter.start();
+		}
+	}
+
+	void pauseTimerIfPresent() {
+		if(isEvaluationEnabled) {
+			this.evaluationAdapter.pause();
+		}
+	}
+
+	void stopTimerIfPresent() {
+		if(isEvaluationEnabled) {
+			this.evaluationAdapter.stop(evaluationStore);
+		}
+	}
+
+	void resumeTimerIfPresent() {
+		if(isEvaluationEnabled) {
+			this.evaluationAdapter.resume();
 		}
 	}
 }

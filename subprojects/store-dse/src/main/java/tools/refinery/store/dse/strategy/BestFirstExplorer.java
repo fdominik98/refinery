@@ -69,16 +69,4 @@ public class BestFirstExplorer extends BestFirstWorker {
 		}
 		stopTimerIfPresent();
 	}
-
-	private void startTimerIfPresent(){
-		if(isEvaluationEnabled) {
-			this.evaluationAdapter.start();
-		}
-	}
-
-	private void stopTimerIfPresent() {
-		if(isEvaluationEnabled) {
-			this.evaluationAdapter.stop(evaluationStore);
-		}
-	}
 }
