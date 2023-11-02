@@ -13,6 +13,8 @@ public class EvaluationStoreImpl extends HashMap<Version, Version> implements Ev
 
 	private List<Stack<Version>> trajectories;
 
+	private final Set<Version> acceptedVersions = new HashSet<>();
+
 	private Optional<Long> timeSpan = Optional.empty();
 
 	@Override
@@ -23,19 +25,22 @@ public class EvaluationStoreImpl extends HashMap<Version, Version> implements Ev
 
 		Stack<Version> longestTrajectory = new Stack<>();
 
-		List<Stack<Version>> trajectories = new ArrayList<>();
+		trajectories = new ArrayList<>();
 		for(var version : entrySet()) {
+			Version newVersion = version.getKey();
+			if (!acceptedVersions.contains(newVersion)){
+				continue;
+			}
 			Stack<Version> trajectory = new Stack<>();
-			Version lastVersion = version.getKey();
-			trajectory.push(lastVersion);
-			do {
-				lastVersion = get(lastVersion);
-				trajectory.push(lastVersion);
-			}while(containsKey(lastVersion));
-			trajectories.add(trajectory);
+			while(containsKey(newVersion)) {
+				trajectory.push(newVersion);
+				newVersion = get(newVersion);
+			}
+			trajectory.push(newVersion);
 			if(trajectory.size() > longestTrajectory.size()) {
 				longestTrajectory = trajectory;
 			}
+			trajectories.add(trajectory);
 		}
 
 		for(var trajectory : trajectories) {
@@ -44,7 +49,6 @@ public class EvaluationStoreImpl extends HashMap<Version, Version> implements Ev
 			}
 		}
 
-		this.trajectories = trajectories;
 		return trajectories;
 	}
 
@@ -62,12 +66,17 @@ public class EvaluationStoreImpl extends HashMap<Version, Version> implements Ev
 	}
 
 	@Override
-	public List<Stack<Version>> getTrajectories() {
-		return trajectories;
+	public void addModelVersion(Version newVersion, Version oldVersion) {
+		put(newVersion, oldVersion);
 	}
 
 	@Override
-	public void addModelVersion(Version oldVersion, Version newVersion) {
-		put(oldVersion, newVersion);
+	public void addSolution(Version solution) {
+		acceptedVersions.add(solution);
+	}
+
+	@Override
+	public int getAllVersionSize() {
+		return size();
 	}
 }

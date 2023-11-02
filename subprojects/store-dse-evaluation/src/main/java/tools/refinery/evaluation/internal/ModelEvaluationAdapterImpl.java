@@ -13,7 +13,6 @@ import tools.refinery.store.model.Model;
 import tools.refinery.evaluation.ModelEvaluationAdapter;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.statecoding.neighbourhood.ObjectCodeImpl;
-import tools.refinery.store.tuple.Tuple;
 
 import java.util.*;
 
@@ -27,7 +26,6 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 
 	private final Model model;
 	private final ModelEvaluationStoreAdapterImpl storeAdapter;
-	private final Symbol<Boolean> inAcceptSymbol;
 	private EvaluationState evaluationState;
 	private long startTime;
 	private long pauseTime;
@@ -35,10 +33,9 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 	private long timeSpan;
 
 
-	public ModelEvaluationAdapterImpl(Model model, ModelEvaluationStoreAdapterImpl storeAdapter, Symbol<Boolean> inAcceptSymbol) {
+	public ModelEvaluationAdapterImpl(Model model, ModelEvaluationStoreAdapterImpl storeAdapter) {
 		this.model = model;
 		this.storeAdapter = storeAdapter;
-		this.inAcceptSymbol = inAcceptSymbol;
 		this.evaluationState = EvaluationState.NOT_STARTED;
 		this.pauseTime = 0;
 		this.startTime = 0;
@@ -93,15 +90,18 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 	}
 
 	@Override
-	public EvaluationResult getEvaluationResult(EvaluationStore evaluationStore,
-												int solutionNumber, List<Symbol<?>> symbols) {
-		evaluationStore.convertToTrajectoryPaths();
+	public EvaluationResult getEvaluationResult(EvaluationStore evaluationStore, List<Symbol<?>> symbols) {
+		var trajectories = evaluationStore.convertToTrajectoryPaths();
+		double sum = 0;
+		for(var t : trajectories) {
+			sum += t.size();
+		}
+
 		return new EvaluationResult(
-				evaluationStore.getTrajectories().size(),
-				solutionNumber,
+				evaluationStore.getAllVersionSize(),
+				sum / trajectories.size(),
 				evaluationStore.getTimeSpan(),
-				evaluateAccuracy(evaluationStore),
-				evaluateDiversity(evaluationStore, symbols));
+				evaluateDistance(trajectories, symbols));
 	}
 
 	@Override
@@ -114,36 +114,11 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		return storeAdapter;
 	}
 
-	private double evaluateAccuracy(EvaluationStore evaluationStore) {
-		double acceptedTrajectories = 0;
-		for(var trajectory : evaluationStore.getTrajectories()) {
-			if(isAccepted(trajectory)) {
-				acceptedTrajectories++;
-			}
-		}
-		return acceptedTrajectories / evaluationStore.getTrajectories().size();
-	}
-
-	private boolean isAccepted(List<Version> trajectory) {
-		var currentVersion = model.getState();
-		for(Version version : trajectory) {
-			model.restore(version);
-			var inAcceptInterpretation = model.getInterpretation(inAcceptSymbol);
-			if(inAcceptInterpretation.get(Tuple.of())) {
-				model.restore(currentVersion);
-				return true;
-			}
-		}
-		model.restore(currentVersion);
-		return false;
-	}
-
-	private double evaluateDiversity(EvaluationStore evaluationStore, List<Symbol<?>> symbols) {
-		Map<Version, ObjectCodeImpl> versionCodeMap = constructVersionCodeMap(evaluationStore, symbols);
-		int numberOfTrajectories = evaluationStore.getTrajectories().size();
-		if (numberOfTrajectories <= 1) {
-			throw new IllegalArgumentException("There must be at least two trajectories to calculate pairwise " +
-					"distance");
+	private double evaluateDistance(List<Stack<Version>> trajectories, List<Symbol<?>> symbols) {
+		Map<Version, ObjectCodeImpl> versionCodeMap = constructVersionCodeMap(trajectories, symbols);
+		int numberOfTrajectories = trajectories.size();
+		if (numberOfTrajectories < 2) {
+			return 0;
 		}
 
 		double totalDistance = 0;
@@ -151,61 +126,14 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 
 		for (int i = 0; i < numberOfTrajectories; i++) {
 			for (int j = i + 1; j < numberOfTrajectories; j++) {
-				var t1 = evaluationStore.getTrajectories().get(i);
-				var t2 = evaluationStore.getTrajectories().get(j);
-				if(isAccepted(t1) && isAccepted(t2)){
-					totalDistance += distance(versionCodeMap,t1, t2);
-					count++;
-				}
+				var t1 = trajectories.get(i);
+				var t2 = trajectories.get(j);
+				totalDistance += distance(versionCodeMap,t1, t2);
+				count++;
 			}
 		}
 
 		return totalDistance / count;
-	}
-	@Override
-	public double distance(ObjectCodeImpl objectCode1, ObjectCodeImpl objectCode2) {
-		Map<Long, Integer> frequencyMap1 = new HashMap<>();
-		Map<Long, Integer> frequencyMap2 = new HashMap<>();
-
-		for (int i = 0; i < objectCode1.getSize(); i++) {
-			frequencyMap1.put(objectCode1.get(i), frequencyMap1.getOrDefault(objectCode1.get(i), 0) + 1);
-		}
-
-		for (int i = 0; i < objectCode2.getSize(); i++) {
-			frequencyMap2.put(objectCode2.get(i), frequencyMap1.getOrDefault(objectCode2.get(i), 0) + 1);
-		}
-
-		int unpairedCount = 0;
-
-		// Iterate over the values in vector1 and check if they have a pair in vector2
-		for (int i = 0; i < objectCode1.getSize(); i++) {
-			int frequency1 = frequencyMap1.get(objectCode1.get(i));
-			int frequency2 = frequencyMap2.getOrDefault(objectCode1.get(i), 0);
-
-			if (frequency1 > frequency2) {
-				unpairedCount += frequency1 - frequency2; // Count the unpaired values
-				frequencyMap2.remove(objectCode1.get(i)); // Remove the paired values from vector2
-			} else if (frequency1 < frequency2) {
-				unpairedCount += frequency2 - frequency1; // Count the unpaired values
-				frequencyMap1.remove(objectCode1.get(i)); // Remove the paired values from vector1
-			} else {
-				// Both vectors have the same frequency for this value, remove from both
-				frequencyMap1.remove(objectCode1.get(i));
-				frequencyMap2.remove(objectCode1.get(i));
-			}
-		}
-
-		// Any remaining values in vector2 are unpaired
-		for (int frequency : frequencyMap2.values()) {
-			unpairedCount += frequency;
-		}
-
-		// Any remaining values in vector1 are unpaired
-		for (int frequency : frequencyMap1.values()) {
-			unpairedCount += frequency;
-		}
-
-		return unpairedCount;
 	}
 
 	private double distance(Map<Version,ObjectCodeImpl> versionCodeMap, List<Version> trajectory1,
@@ -224,7 +152,8 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		return sum / trajectory1.size();
 	}
 
-	private Map<Version,ObjectCodeImpl> constructVersionCodeMap(EvaluationStore evaluationStore, List<Symbol<?>> symbols) {
+	private Map<Version,ObjectCodeImpl> constructVersionCodeMap(List<Stack<Version>> trajectories,
+																List<Symbol<?>> symbols) {
 		var interpretations = symbols.stream().map(model::getInterpretation).toList();
 		ThreeDNeighbourhoodCalculator neighbourhoodCalculator = new ThreeDNeighbourhoodCalculator(model,
 				interpretations, IntSets.mutable.empty());
@@ -232,7 +161,7 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		Map<Version, ObjectCodeImpl> versionCodeMap = new HashMap<>();
 
 		var currentVersion = model.getState();
-		for(var trajectory : evaluationStore.getTrajectories()) {
+		for(var trajectory : trajectories) {
 			for(Version version : trajectory) {
 				if(!versionCodeMap.containsKey(version)) {
 					model.restore(version);
@@ -263,9 +192,6 @@ public class ModelEvaluationAdapterImpl implements ModelEvaluationAdapter {
 		Set<Long> union = new HashSet<>(set1);
 		union.addAll(set2);
 
-		double jaccardSimilarity = (double) intersection.size() / union.size();
-
-		// Return Jaccard Distance
-		return 1.0 - jaccardSimilarity;
+		return (double) intersection.size() / union.size();
 	}
 }

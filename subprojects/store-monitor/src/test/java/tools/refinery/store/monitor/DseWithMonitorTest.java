@@ -27,34 +27,36 @@ import tools.refinery.visualization.internal.FileFormat;
 import tools.refinery.evaluation.ModelEvaluationAdapter;
 
 class DseWithMonitorTest {
+	int[] solutions = {10};
+	boolean viz = false;
+	int warmups = 10;
+	int meas = 30;
 
 	@Test
 	//@Disabled("This test is only for debugging purposes")
 	void TrafficSituationTest() {
 		var metaModel = new TrafficSituationMetaModel();
-		/*int[] solutions = {1000};
-		int[] warmUps = {0};
-		runTrajectoryGenerations(metaModel, true,
+		runTrajectoryGenerations(metaModel, viz,
 				"trafficTestOutput", solutions,
-				warmUps,1,
-				true);*/
+				warmups,meas,	true, 0, !viz);
 
-		int[] solutions = {50, 100, 500, 1000};
-		int[] warmUps = {20, 0, 0, 0};
-		runTrajectoryGenerations(metaModel, false,
-				null, solutions,
-				warmUps,30,	false, 15);
+		runTrajectoryGenerations(metaModel, viz,
+				"trafficTestOutput", solutions,
+				warmups,meas,	false, 0, !viz);
 	}
 
 	@Test
 		//@Disabled("This test is only for debugging purposes")
 	void GestureRecognitionTest() {
 		var metaModel = new GestureRecognitionMetaModel();
-		int[] solutions = {20};
-		int[] warmUps = {0};
-		runTrajectoryGenerations(metaModel, true,
+
+		/*runTrajectoryGenerations(metaModel, viz,
 				"gestureTestOutput", solutions,
-				warmUps,1,true, 15);
+				warmups,meas,	true, 0, !viz);*/
+
+		runTrajectoryGenerations(metaModel, viz,
+				"gestureTestOutput", solutions,
+				warmups,meas,	true, 0, !viz);
 	}
 
 	@Test
@@ -62,17 +64,14 @@ class DseWithMonitorTest {
 	void SenderReceiverTest() {
 		var metaModel = new SenderReceiverMetaModel();
 
-		int[] solutions = {100};
-		int[] warmUps = {0};
-		runTrajectoryGenerations(metaModel, true,
+		runTrajectoryGenerations(metaModel, viz,
 				"senderReceiverTestOutput", solutions,
-				warmUps,1,true, 15);
+				warmups,meas,	true, 0, !viz);
 
-		/*int[] solutions = {50, 100, 500, 1000};
-		int[] warmUps = {20, 0, 0, 0};
-		runTrajectoryGenerations(metaModel, false,
-				null, solutions,
-				warmUps,30,	false);*/
+		runTrajectoryGenerations(metaModel, viz,
+				"senderReceiverTestOutput", solutions,
+				warmups,meas,	false, 0, !viz);
+
 	}
 
 	private ModelEvaluationAdapter.EvaluationResult runTrajectoryGeneration(
@@ -88,7 +87,6 @@ class DseWithMonitorTest {
 		if(guided) {
 			designSpaceExplorationAdapterBuilder
 					//.exclude(new MonitorFitnessExcludeCriterion(traverser.monitor, metaModel.clockSymbol, timeOut))
-					.accept(new MonitorFitnessAcceptCriterion(traverser.monitor, metaModel.clockSymbol, timeOut))
 					.objective(new MonitorBasedObjective(traverser.monitor));
 		}
 		else {
@@ -96,7 +94,7 @@ class DseWithMonitorTest {
 		}
 
 		var storeBuilder = ModelStore.builder()
-				.symbols(metaModel.symbolsWithClock)
+				.symbols(metaModel.symbols)
 				.with(StateCoderAdapter.builder())
 				.with(ModificationAdapter.builder())
 				.with(QueryInterpreterAdapter.builder())
@@ -104,9 +102,9 @@ class DseWithMonitorTest {
 						.monitor(traverser.monitor)
 						.clock(metaModel.clockSymbol)
 						.withStateQueries())
-				.with(ModelEvaluationAdapter.builder()
-						.inAcceptSymbolSymbol(traverser.monitor.inAcceptSymbol))
-				.with(designSpaceExplorationAdapterBuilder);
+				.with(ModelEvaluationAdapter.builder())
+				.with(designSpaceExplorationAdapterBuilder
+						.accept(new MonitorFitnessAcceptCriterion(traverser.monitor, metaModel.clockSymbol, timeOut)));
 		if (visualization) {
 			storeBuilder.with(ModelVisualizerAdapter.builder()
 					.withOutputPath(outPath)
@@ -134,41 +132,46 @@ class DseWithMonitorTest {
 		queryEngine.flushChanges();
 
 		var bestFirst = new BestFirstStoreManager(store, solutionNumber);
+		System.gc();
 		bestFirst.startExploration(initialVersion);
 
 		if (visualization) {
 			model.getAdapter(ModelVisualizerAdapter.class).visualize(bestFirst.getVisualizationStore());
 		}
 
-		return evaluationAdapter.getEvaluationResult( bestFirst.getEvaluationStore(),
-				bestFirst.getSolutionStore().getSolutions().size(), metaModel.symbols);
+		return evaluationAdapter.getEvaluationResult( bestFirst.getEvaluationStore(), metaModel.symbols);
 	}
 
 	private void runTrajectoryGenerations(
-			MetaModelInstance metaModel, boolean visualization, String outPath, int[] solutions, int[] warmUps,
-			int measurements, boolean guided, int timeOut) {
-
-		var medTimeSpans = new ModelEvaluationAdapter.EvaluationResultContainer();
-		var medAccuracy = new ModelEvaluationAdapter.EvaluationResultContainer();
-		var medDiversity = new ModelEvaluationAdapter.EvaluationResultContainer();
+			MetaModelInstance metaModel, boolean visualization, String outPath, int[] solutions, int warmUps,
+			int measurements, boolean guided, int timeOut, boolean print) {
 
 		for(int i = 0; i < solutions.length; i++) {
+			System.out.println("Generating " + solutions[i] + " solutions...");
 			var evaluationResults = new	ModelEvaluationAdapter.EvaluationResultContainer();
 
-			for(int j = 0; j < warmUps[i]; j++) {
-				runTrajectoryGeneration(metaModel, visualization, outPath, solutions[i], guided, timeOut);
+			for(int j = 0; j < warmUps; j++) {
+				System.out.println("Warmup " + j);
+				runTrajectoryGeneration(metaModel, false, null, solutions[i], guided, timeOut);
 			}
 
-			for(int j = 0; j < measurements; j++) {
-				evaluationResults.add(runTrajectoryGeneration(metaModel, visualization, outPath, solutions[i], guided
+			for(int j = 0; j < measurements - 1; j++) {
+				System.out.println("Measurement " + j);
+				evaluationResults.add(runTrajectoryGeneration(metaModel, false, null, solutions[i], guided
 						, timeOut));
 			}
-			medTimeSpans.add(evaluationResults.medianByTimeSpan());
-			medAccuracy.add(evaluationResults.medianByAccuracy());
-			medDiversity.add(evaluationResults.medianByDiversity());
+			System.out.println("Measurement " + (measurements - 1));
+			evaluationResults.add(runTrajectoryGeneration(metaModel, visualization, outPath, solutions[i], guided
+					, timeOut));
+
+			System.out.println("Median all version number: " + evaluationResults.medianByAllVersionNumber().allVersionNumber());
+			System.out.println("Median trajectory length: " + evaluationResults.medianByTrajectoryLength().trajectoryLength());
+			System.out.println("Median timespan: " + evaluationResults.medianByTimeSpan().timeSpan());
+			System.out.println("Median diversity: " + evaluationResults.medianByDiversity().diversity());
+			if(print) {
+				evaluationResults.toFile(metaModel.getCaseStudyId(), metaModel.instance.getInstanceId(),
+						solutions[i], guided);
+			}
 		}
-		System.out.println(medTimeSpans);
-		System.out.println(medAccuracy);
-		System.out.println(medDiversity);
 	}
 }

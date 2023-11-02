@@ -9,4 +9,6 @@ public abstract class ModelInitializer {
 	public ModelInitializer(Model model) {
 		modificationAdapter = model.getAdapter(ModificationAdapter.class);
 	}
+
+	public abstract String getInstanceId();
 }

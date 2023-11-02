@@ -165,7 +165,10 @@ public class BestFirstWorker {
 					 visitResult.transformation().getDefinition().getName() + ", " + visitResult.activation());
 			 }
 			 if(isEvaluationEnabled) {
-				evaluationStore.addModelVersion(oldVersion, newVersion);
+				evaluationStore.addModelVersion(newVersion, oldVersion);
+				 if(submitResult.accepted()) {
+					 evaluationStore.addSolution(newVersion);
+				 }
 			}
 		}
 		resumeTimerIfPresent();

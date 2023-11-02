@@ -14,7 +14,7 @@ import tools.refinery.store.monitor.internal.guards.ClockLessThanTimeConstraint;
 import tools.refinery.store.monitor.internal.guards.Guard;
 import tools.refinery.store.monitor.internal.model.*;
 import tools.refinery.store.model.ModelStore;
-import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationInitializer;
+import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationInitializer1;
 import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationAutomaton;
 import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationMetaModel;
 import tools.refinery.store.query.ModelQueryAdapter;
@@ -190,7 +190,7 @@ class AdapterTest {
 				scenario.a2)).query);
 
 		// Init model
-		TrafficSituationInitializer initializer = new TrafficSituationInitializer(model, metaModel);
+		TrafficSituationInitializer1 initializer = new TrafficSituationInitializer1(model, metaModel);
 		monitorAdapter.init();
 
 		Tuple actors = Tuple.of(initializer.actor1.get(0), initializer.actor2.get(0));

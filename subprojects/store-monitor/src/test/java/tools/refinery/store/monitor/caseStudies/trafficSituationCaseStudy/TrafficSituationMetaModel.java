@@ -18,16 +18,22 @@ import static tools.refinery.store.dse.transition.actions.ActionLiterals.add;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
 
 public final class TrafficSituationMetaModel extends MetaModelInstance {
+	@Override
+	public ModelInitializer createInitializer(Model model) {
+		instance = new TrafficSituationInitializer3(model, this);
+		return instance;
+	}
+
 	public Symbol<Boolean> cellSymbol = Symbol.of("Cell", 1);
 	public KeyOnlyView<Boolean> cellView = new KeyOnlyView<>(cellSymbol);
-	public Symbol<Boolean> southOfSymbol = Symbol.of("SouthOf", 2);
-	public KeyOnlyView<Boolean> southOfView = new KeyOnlyView<>(southOfSymbol);
-	public Symbol<Boolean> northOfSymbol = Symbol.of("NorthOf", 2);
-	public KeyOnlyView<Boolean> northOfView = new KeyOnlyView<>(northOfSymbol);
-	public Symbol<Boolean> westOfSymbol = Symbol.of("WestOf", 2);
-	public KeyOnlyView<Boolean> westOfView = new KeyOnlyView<>(westOfSymbol);
-	public Symbol<Boolean> eastOfSymbol = Symbol.of("EastOf", 2);
-	public KeyOnlyView<Boolean> eastOfView = new KeyOnlyView<>(eastOfSymbol);
+	public Symbol<Boolean> behindSymbol = Symbol.of("Behind", 2);
+	public KeyOnlyView<Boolean> behindView = new KeyOnlyView<>(behindSymbol);
+	public Symbol<Boolean> inFrontSymbol = Symbol.of("InFront", 2);
+	public KeyOnlyView<Boolean> inFrontView = new KeyOnlyView<>(inFrontSymbol);
+	public Symbol<Boolean> toLeftSymbol = Symbol.of("ToLeft", 2);
+	public KeyOnlyView<Boolean> toLeftView = new KeyOnlyView<>(toLeftSymbol);
+	public Symbol<Boolean> toRightSymbol = Symbol.of("ToRight", 2);
+	public KeyOnlyView<Boolean> toRightView = new KeyOnlyView<>(toRightSymbol);
 	public Symbol<Boolean> onCellSymbol = Symbol.of("OnCell", 2);
 	public KeyOnlyView<Boolean> onCellView = new KeyOnlyView<>(onCellSymbol);
 	public Symbol<Boolean> laneSymbol = Symbol.of("Lane", 1);
@@ -40,10 +46,10 @@ public final class TrafficSituationMetaModel extends MetaModelInstance {
 		super();
 
 		addSymbol(cellSymbol);
-		addSymbol(southOfSymbol);
-		addSymbol(northOfSymbol);
-		addSymbol(westOfSymbol);
-		addSymbol(eastOfSymbol);
+		addSymbol(behindSymbol);
+		addSymbol(inFrontSymbol);
+		addSymbol(toLeftSymbol);
+		addSymbol(toRightSymbol);
 		addSymbol(onCellSymbol);
 		addSymbol(laneSymbol);
 		addSymbol(actorSymbol);
@@ -52,10 +58,10 @@ public final class TrafficSituationMetaModel extends MetaModelInstance {
 
 		RelationalQuery neighborhoodPrecondition = Query.of("neighborhoodPrecondition",
 				(builder, c1, c2) -> builder
-						.clause(southOfView.call(c1, c2))
-						.clause(eastOfView.call(c1, c2))
-						.clause(westOfView.call(c1, c2))
-						.clause(northOfView.call(c1, c2))
+						.clause(behindView.call(c1, c2))
+						.clause(toRightView.call(c1, c2))
+						.clause(toLeftView.call(c1, c2))
+						.clause(inFrontView.call(c1, c2))
 		);
 
 		var moveToNeighborRule = Rule.of("MoveToNeighborRule", (builder, a1, c1, c2) -> builder
@@ -106,19 +112,19 @@ public final class TrafficSituationMetaModel extends MetaModelInstance {
 				if (x > 0) {
 					for (int i = 0; i < x - 1; i++) {
 						tempCell2 = NodeVariable.of();
-						literals.add(westOfView.call(tempCell1, tempCell2));
+						literals.add(toLeftView.call(tempCell1, tempCell2));
 						tempCell1 = tempCell2;
 					}
 					tempCell2 = (y == 0) ? cell2 : NodeVariable.of();
-					literals.add(westOfView.call(tempCell1, tempCell2));
+					literals.add(toLeftView.call(tempCell1, tempCell2));
 				} else if (x < 0) {
 					for (int i = 0; i < -x - 1; i++) {
 						tempCell2 = NodeVariable.of();
-						literals.add(eastOfView.call(tempCell1, tempCell2));
+						literals.add(toRightView.call(tempCell1, tempCell2));
 						tempCell1 = tempCell2;
 					}
 					tempCell2 = (y == 0) ? cell2 : NodeVariable.of();
-					literals.add(eastOfView.call(tempCell1, tempCell2));
+					literals.add(toRightView.call(tempCell1, tempCell2));
 				}
 
 				if(x != 0){
@@ -128,17 +134,17 @@ public final class TrafficSituationMetaModel extends MetaModelInstance {
 				if (y > 0) {
 					for (int i = 0; i < y - 1; i++) {
 						tempCell2 = NodeVariable.of();
-						literals.add(southOfView.call(tempCell1, tempCell2));
+						literals.add(behindView.call(tempCell1, tempCell2));
 						tempCell1 = tempCell2;
 					}
-					literals.add(southOfView.call(tempCell1, cell2));
+					literals.add(behindView.call(tempCell1, cell2));
 				} else if (y < 0) {
 					for (int i = 0; i < -y - 1; i++) {
 						tempCell2 = NodeVariable.of();
-						literals.add(northOfView.call(tempCell1, tempCell2));
+						literals.add(inFrontView.call(tempCell1, tempCell2));
 						tempCell1 = tempCell2;
 					}
-					literals.add(northOfView.call(tempCell1, cell2));
+					literals.add(inFrontView.call(tempCell1, cell2));
 				}
 			}
 			builder.clause(literals);
@@ -146,12 +152,12 @@ public final class TrafficSituationMetaModel extends MetaModelInstance {
 	}
 
 	@Override
-	public ModelInitializer createInitializer(Model model) {
-		return new TrafficSituationInitializer(model, this);
+	public AutomatonInstance createAutomaton() {
+		return new TrafficSituationAutomaton(this);
 	}
 
 	@Override
-	public AutomatonInstance createAutomaton() {
-		return new TrafficSituationAutomaton(this);
+	public String getCaseStudyId() {
+		return "TRAF";
 	}
 }

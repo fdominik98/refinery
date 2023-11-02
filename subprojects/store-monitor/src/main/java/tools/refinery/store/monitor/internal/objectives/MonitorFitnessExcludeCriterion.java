@@ -25,10 +25,12 @@ public class MonitorFitnessExcludeCriterion implements Criterion{
 		var inAcceptInterpretation = model.getInterpretation(monitor.inAcceptSymbol);
 		var clockInterpretation = model.getInterpretation(clockSymbol);
 
-		Double fitness = fitnessInterpretation.get(Tuple.of());
-		Boolean inAccept = inAcceptInterpretation.get(Tuple.of());
-		Integer clock = clockInterpretation.get(Tuple.of());
-		boolean valuesExist = fitness != null && inAccept != null && clock != null;
-		return () -> valuesExist && !inAccept;
+		return () -> {
+			Double fitness = fitnessInterpretation.get(Tuple.of());
+			Boolean inAccept = inAcceptInterpretation.get(Tuple.of());
+			Integer clock = clockInterpretation.get(Tuple.of());
+			boolean valuesExist = fitness != null && inAccept != null && clock != null;
+			return valuesExist && !inAccept;
+		};
 	}
 }

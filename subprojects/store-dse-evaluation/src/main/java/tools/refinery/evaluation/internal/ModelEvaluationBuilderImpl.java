@@ -6,25 +6,15 @@
 package tools.refinery.evaluation.internal;
 
 import tools.refinery.store.adapter.AbstractModelAdapterBuilder;
-import tools.refinery.store.adapter.ModelAdapterBuilder;
 import tools.refinery.store.model.ModelStore;
 import tools.refinery.evaluation.ModelEvaluationBuilder;
-import tools.refinery.store.representation.Symbol;
 
 public class ModelEvaluationBuilderImpl
 		extends AbstractModelAdapterBuilder<ModelEvaluationStoreAdapterImpl>
 		implements ModelEvaluationBuilder {
 
-	private Symbol<Boolean> inAcceptSymbol;
-
 	@Override
 	protected ModelEvaluationStoreAdapterImpl doBuild(ModelStore store) {
-		return new ModelEvaluationStoreAdapterImpl(store, inAcceptSymbol);
-	}
-
-	@Override
-	public ModelAdapterBuilder inAcceptSymbolSymbol(Symbol<Boolean> inAcceptSymbol) {
-		this.inAcceptSymbol = inAcceptSymbol;
-		return this;
+		return new ModelEvaluationStoreAdapterImpl(store);
 	}
 }

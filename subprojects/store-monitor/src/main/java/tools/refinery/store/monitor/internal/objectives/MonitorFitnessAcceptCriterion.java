@@ -21,15 +21,11 @@ public class MonitorFitnessAcceptCriterion implements Criterion{
 
 	@Override
 	public CriterionCalculator createCalculator(Model model) {
-		var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
-		var acceptanceInterpretation = model.getInterpretation(monitor.acceptanceSymbol);
 		var inAcceptInterpretation = model.getInterpretation(monitor.inAcceptSymbol);
-		var clockInterpretation = model.getInterpretation(clockSymbol);
-		Double fitness = fitnessInterpretation.get(Tuple.of());
-		Boolean accepted = acceptanceInterpretation.get(Tuple.of());
-		Boolean inAccept = inAcceptInterpretation.get(Tuple.of());
-		Integer clock = clockInterpretation.get(Tuple.of());
-		boolean valuesExist = fitness != null && accepted != null && inAccept != null;
-		return () -> valuesExist && (fitness <= 1 && (accepted));
+		return () -> {
+			Boolean inAccept = inAcceptInterpretation.get(Tuple.of());
+			boolean valuesExist = inAccept != null;
+			return valuesExist && inAccept;
+		};
 	}
 }

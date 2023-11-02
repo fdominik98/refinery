@@ -8,7 +8,6 @@ import tools.refinery.store.monitor.internal.model.Monitor;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
-import tools.refinery.store.tuple.Tuple0;
 
 public class ModelMonitorAdapterImpl implements ModelMonitorAdapter, ModelListener {
 

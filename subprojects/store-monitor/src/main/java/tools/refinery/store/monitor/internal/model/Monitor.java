@@ -10,7 +10,6 @@ public class Monitor {
 	public final ClockHolder clockHolder;
 	public final List<Symbol<ClockHolder>> symbolList = new ArrayList<>();
 	public final Symbol<Double> fitnessSymbol = Symbol.of("Fitness", 0, Double.class);
-	public final Symbol<Boolean> acceptanceSymbol = Symbol.of("Accepted", 0);
 	public final Symbol<Boolean> inAcceptSymbol = Symbol.of("InAccept", 0);
 	public final List<RelationalQuery> queryList = new ArrayList<>();
 
@@ -18,7 +17,7 @@ public class Monitor {
 		this.stateMachine = stateMachine;
 		this.clockHolder = clockHolder;
 	}
-	private Map<State, Map<List<NodeVariable>, StateSymbol>> symbols = new HashMap<>();
+	private final Map<State, Map<List<NodeVariable>, StateSymbol>> symbols = new HashMap<>();
 
 	public Map<List<NodeVariable>, StateSymbol> get(State s) {
 		return symbols.get(s);
@@ -39,11 +38,9 @@ public class Monitor {
 		return symbols.get(stateMachine.startState).get(List.of());
 	}
 
-	public boolean containsKey(State s, List ps) {
+	public boolean containsKey(State s, List<NodeVariable> ps) {
 		if (symbols.containsKey(s)){
-			if (symbols.get(s).containsKey(ps)) {
-				return true;
-			}
+			return symbols.get(s).containsKey(ps);
 		}
 		return false;
 	}

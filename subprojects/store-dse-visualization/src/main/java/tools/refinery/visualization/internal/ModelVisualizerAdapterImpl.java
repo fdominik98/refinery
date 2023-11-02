@@ -349,12 +349,12 @@ public class ModelVisualizerAdapterImpl implements ModelVisualizerAdapter {
 	public void visualize(VisualizationStore visualizationStore) {
 		this.designSpaceBuilder.append(visualizationStore.getDesignSpaceStringBuilder());
 		this.states.putAll(visualizationStore.getStates());
-		String newPath = outputPath + "Temp";
-		renderDesignSpace(newPath, formats);
-
-		Path oldDirPath = Paths.get(outputPath);
+		//String newPath = outputPath + "Temp";
+		//renderDesignSpace(newPath, formats);
+		renderDesignSpace(outputPath, formats);
+		/*Path oldDirPath = Paths.get(outputPath);
 		Path newDirPath = Paths.get(newPath);
-		replaceOldOutput(oldDirPath, newDirPath);
+		replaceOldOutput(oldDirPath, newDirPath);*/
 	}
 
 	private void replaceOldOutput(Path oldDirPath, Path newDirPath) {

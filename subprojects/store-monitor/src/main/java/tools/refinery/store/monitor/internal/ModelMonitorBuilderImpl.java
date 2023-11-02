@@ -18,7 +18,6 @@ import tools.refinery.store.query.term.NodeVariable;
 import tools.refinery.store.query.term.Variable;
 import tools.refinery.store.query.view.FunctionView;
 import tools.refinery.store.representation.Symbol;
-import tools.refinery.store.statecoding.StateCoderBuilder;
 import tools.refinery.store.tuple.Tuple;
 import java.util.*;
 import java.util.function.Consumer;
@@ -63,7 +62,6 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 	protected void doConfigure(ModelStoreBuilder storeBuilder) {
 		storeBuilder.symbols(monitor.symbolList);
 		storeBuilder.symbol(monitor.fitnessSymbol);
-		storeBuilder.symbol(monitor.acceptanceSymbol);
 		storeBuilder.symbol(monitor.inAcceptSymbol);
 
 		for (Transition t : monitor.stateMachine.transitions) {
@@ -176,24 +174,11 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 
 			var inAcceptInterpretation = model.getInterpretation(monitor.inAcceptSymbol);
 			inAcceptInterpretation.put(Tuple.of(), inAccept);
-			if(inAccept) {
-				var acceptanceInterpretation = model.getInterpretation(monitor.acceptanceSymbol);
-				acceptanceInterpretation.put(Tuple.of(), true);
-			}
 		};
 		actionSet.add(afterAction);
 		actionSet.add(flushAction);
 
 		var queryBuilder = storeBuilder.getAdapter(ModelQueryBuilder.class);
 		queryBuilder.queries(querySet);
-
-		var stateCoderOpt = storeBuilder.tryGetAdapter(StateCoderBuilder.class);
-		if(stateCoderOpt.isPresent()) {
-			var stateCoder = stateCoderOpt.get();
-			stateCoder.excludeAll(monitor.symbolList);
-			stateCoder.exclude(monitor.acceptanceSymbol);
-			stateCoder.exclude(monitor.fitnessSymbol);
-			stateCoder.exclude(monitor.inAcceptSymbol);
-		}
 	}
 }

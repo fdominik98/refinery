@@ -7,38 +7,42 @@ import tools.refinery.store.query.term.NodeVariable;
 
 public class GestureRecognitionAutomaton extends AutomatonInstance {
 
-	public final State s2;
-	public final State s3;
-	public final State s4;
-	public final State s5;
-	public final State s6;
-	public final NodeVariable body;
+	public final State movedUp;
+	public final State success;
+	public final State movedDown;
+	public final State trap;
+	public final State above;
+	public final NodeVariable hand;
+
 
 
 	public GestureRecognitionAutomaton(GestureRecognitionMetaModel metaModel) {
 		super(4);
 
-		s2 = stateMachine.createState(3);
-		s3 = stateMachine.createState( 7);
-		s4 = stateMachine.createState(State.Type.ACCEPT, 10);
-		s5 = stateMachine.createState(0);
-		s6 = stateMachine.createState(State.Type.TRAP);
+		movedUp = stateMachine.createState(3);
+		movedDown = stateMachine.createState( 0);
+		success = stateMachine.createState(State.Type.ACCEPT, 10);
+		above = stateMachine.createState( 6);
+		trap = stateMachine.createState(State.Type.TRAP);
 
-		body =  NodeVariable.of("body");
+		hand =  NodeVariable.of("hand");
 
-		var rightHandAboveHead = Guard.of(metaModel.rightHandAboveHead(body));
-		var stretchedRightArm = Guard.of(metaModel.stretchedRightArm(body));
-		var rightHandMovedUp = Guard.of(metaModel.rightHandMovedUp(body));
-		var stretchedRightArmAndMovedDown = Guard.of(metaModel.stretchedRightArmAndMovedDown(body));
-		var stretchedRightArmAndMovedUp = Guard.of(metaModel.stretchedRightArmAndMovedUp(body));
+		var handAboveHead = Guard.of(metaModel.handAboveHead(hand));
+		var handBelowHead = Guard.of(metaModel.handBelowHead(hand));
+		var stretchedArm = Guard.of(metaModel.stretchedArm(hand));
+		var handMovedUp = Guard.of(metaModel.handMovedUp(hand));
+		var handMovedDown = Guard.of(metaModel.handMovedDown(hand));
 
-		stateMachine.createTransition(stateMachine.startState, stretchedRightArm, s2);
+		stateMachine.createTransition(stateMachine.startState, stretchedArm, movedUp);
 
-		stateMachine.createTransition(s2, rightHandMovedUp.neg(), s5);
+		stateMachine.createTransition(movedUp, handMovedDown, movedDown);
 
-		stateMachine.createTransition(s2, rightHandAboveHead, s3);
-		stateMachine.createTransition(s3, rightHandAboveHead.neg(), s4);
+		stateMachine.createTransition(movedDown, handMovedUp, movedUp);
 
-		stateMachine.createTransition(s4, rightHandAboveHead.neg(), s6);
+		stateMachine.createTransition(movedUp, handAboveHead, above);
+
+		stateMachine.createTransition(above, handBelowHead, success);
+
+		stateMachine.createTransition(success, Guard.of(), trap);
 	}
 }

@@ -10,12 +10,10 @@ import java.util.List;
 import java.util.Stack;
 
 public interface EvaluationStore {
-
 	List<Stack<Version>> convertToTrajectoryPaths();
 	long getTimeSpan();
 	void setTimeSpan(long timeSpan);
-
-	List<Stack<Version>> getTrajectories();
-
-	void addModelVersion(Version oldVersion, Version newVersion);
+	void addModelVersion(Version newVersion, Version oldVersion);
+	void addSolution(Version solution);
+	int getAllVersionSize();
 }

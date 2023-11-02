@@ -17,6 +17,11 @@ import static tools.refinery.store.dse.transition.actions.ActionLiterals.add;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
 
 public final class SenderReceiverMetaModel extends MetaModelInstance {
+	@Override
+	public ModelInitializer createInitializer(Model model) {
+		instance = new SenderReceiverInitializer1(model, this);
+		return instance;
+	}
 	public Symbol<Boolean> messageSymbol = Symbol.of("Message", 1);
 	public AnySymbolView messageView = new KeyOnlyView<>(messageSymbol);
 	public Symbol<Boolean> senderSymbol = Symbol.of("Sender", 1);
@@ -90,7 +95,7 @@ public final class SenderReceiverMetaModel extends MetaModelInstance {
 						doneView.call(CallPolarity.NEGATIVE, message, message)
 				)
 				.action(
-						new RandomTransmitMessageActionLiteral(atSymbol, message, router1, router2, 0.8),
+						new RandomTransmitMessageActionLiteral(atSymbol, message, router1, router2, 1),
 						new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1)
 				)
 		);
@@ -101,12 +106,12 @@ public final class SenderReceiverMetaModel extends MetaModelInstance {
 	}
 
 	@Override
-	public ModelInitializer createInitializer(Model model) {
-		return new SenderReceiverInitializer(model, this);
+	public AutomatonInstance createAutomaton() {
+		return new SenderReceiverAutomaton(this);
 	}
 
 	@Override
-	public AutomatonInstance createAutomaton() {
-		return new SenderReceiverAutomaton(this);
+	public String getCaseStudyId() {
+		return "ROUT";
 	}
 }
