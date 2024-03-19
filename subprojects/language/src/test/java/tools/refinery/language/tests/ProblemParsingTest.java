@@ -42,7 +42,7 @@ class ProblemParsingTest {
 				error invalidTaxStatus(Person p) <->
 					taxStatus(p, CHILD), children(p, _q).
 
-				indiv family.
+				atom family.
 				Family(family).
 				members(family, anne): true.
 				members(family, bob).
@@ -51,6 +51,6 @@ class ProblemParsingTest {
 				?children(bob, ciri).
 				taxStatus(anne, ADULT).
 				""");
-		assertThat(problem.errors(), empty());
+		assertThat(problem.getResourceErrors(), empty());
 	}
 }

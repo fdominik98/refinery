@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021-2023 The Refinery Authors <https://refinery.tools/>
+ * SPDX-FileCopyrightText: 2021-2024 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -29,7 +29,7 @@ public class ProblemSemanticHighlightingCalculator extends DefaultSemanticHighli
 	private static final String CONTAINMENT_CLASS = "containment";
 	private static final String ERROR_CLASS = "error";
 	private static final String NODE_CLASS = "node";
-	private static final String INDIVIDUAL_NODE_CLASS = "individual";
+	private static final String ATOM_NODE_CLASS = "atom";
 	private static final String NEW_NODE_CLASS = "new";
 
 	@Inject
@@ -38,9 +38,12 @@ public class ProblemSemanticHighlightingCalculator extends DefaultSemanticHighli
 	@Inject
 	private ProblemDesugarer desugarer;
 
+	@Inject
+	private TypeHashProvider typeHashProvider;
+
 	@Override
 	protected boolean highlightElement(EObject object, IHighlightedPositionAcceptor acceptor,
-			CancelIndicator cancelIndicator) {
+									   CancelIndicator cancelIndicator) {
 		highlightName(object, acceptor);
 		highlightCrossReferences(object, acceptor, cancelIndicator);
 		return false;
@@ -57,7 +60,7 @@ public class ProblemSemanticHighlightingCalculator extends DefaultSemanticHighli
 	}
 
 	protected void highlightCrossReferences(EObject object, IHighlightedPositionAcceptor acceptor,
-			CancelIndicator cancelIndicator) {
+											CancelIndicator cancelIndicator) {
 		for (EReference reference : object.eClass().getEAllReferences()) {
 			if (reference.isContainment()) {
 				continue;
@@ -96,9 +99,9 @@ public class ProblemSemanticHighlightingCalculator extends DefaultSemanticHighli
 
 	protected String[] getHighlightClass(EObject eObject, EReference reference) {
 		boolean isError = ProblemUtil.isError(eObject);
-		if (ProblemUtil.isBuiltIn(eObject)) {
+		if (ProblemUtil.isBuiltIn(eObject) && !(eObject instanceof Problem)) {
 			var className = isError ? ERROR_CLASS : BUILTIN_CLASS;
-			return new String[] { className };
+			return new String[]{className};
 		}
 		return getUserDefinedElementHighlightClass(eObject, reference, isError);
 	}
@@ -113,21 +116,32 @@ public class ProblemSemanticHighlightingCalculator extends DefaultSemanticHighli
 				&& desugarer.isContainmentReference(referenceDeclaration)) {
 			classesBuilder.add(CONTAINMENT_CLASS);
 		}
-		if (isError) {
+		if (isError && reference != null) {
+			// References to error patterns should be highlighted as errors, but error pattern definitions shouldn't.
 			classesBuilder.add(ERROR_CLASS);
 		}
 		if (eObject instanceof Node node) {
-			if (reference == ProblemPackage.Literals.VARIABLE_OR_NODE_EXPR__VARIABLE_OR_NODE) {
-				classesBuilder.add(NODE_CLASS);
-			}
-			if (ProblemUtil.isIndividualNode(node)) {
-				classesBuilder.add(INDIVIDUAL_NODE_CLASS);
-			}
-			if (ProblemUtil.isNewNode(node)) {
-				classesBuilder.add(NEW_NODE_CLASS);
+			highlightNode(node, reference, classesBuilder);
+		}
+		if (eObject instanceof Relation relation) {
+			var typeHash = typeHashProvider.getTypeHash(relation);
+			if (typeHash != null) {
+				classesBuilder.add("typeHash-" + typeHash);
 			}
 		}
 		List<String> classes = classesBuilder.build();
 		return classes.toArray(new String[0]);
+	}
+
+	private static void highlightNode(Node node, EReference reference, ImmutableList.Builder<String> classesBuilder) {
+		if (reference == ProblemPackage.Literals.VARIABLE_OR_NODE_EXPR__VARIABLE_OR_NODE) {
+			classesBuilder.add(NODE_CLASS);
+		}
+		if (ProblemUtil.isAtomNode(node)) {
+			classesBuilder.add(ATOM_NODE_CLASS);
+		}
+		if (ProblemUtil.isMultiNode(node)) {
+			classesBuilder.add(NEW_NODE_CLASS);
+		}
 	}
 }

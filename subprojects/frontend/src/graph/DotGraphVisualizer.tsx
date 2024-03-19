@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023 The Refinery Authors <https://refinery.tools/>
+ * SPDX-FileCopyrightText: 2023-2024 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: EPL-2.0
  */
@@ -30,11 +30,13 @@ function DotGraphVisualizer({
   fitZoom,
   transitionTime,
   animateThreshold,
+  setSvgContainer,
 }: {
   graph: GraphStore;
   fitZoom?: FitZoomCallback;
   transitionTime?: number;
   animateThreshold?: number;
+  setSvgContainer?: (container: HTMLElement | undefined) => void;
 }): JSX.Element {
   const transitionTimeOrDefault =
     transitionTime ?? DotGraphVisualizer.defaultProps.transitionTime;
@@ -48,6 +50,7 @@ function DotGraphVisualizer({
 
   const setElement = useCallback(
     (element: HTMLDivElement | null) => {
+      setSvgContainer?.(element ?? undefined);
       if (disposerRef.current !== undefined) {
         disposerRef.current();
         disposerRef.current = undefined;
@@ -147,16 +150,18 @@ function DotGraphVisualizer({
       transitionTimeOrDefault,
       animateThresholdOrDefault,
       animate,
+      setSvgContainer,
     ],
   );
 
-  return <GraphTheme ref={setElement} />;
+  return <GraphTheme ref={setElement} colorNodes={graph.colorNodes} />;
 }
 
 DotGraphVisualizer.defaultProps = {
   fitZoom: undefined,
   transitionTime: 250,
   animateThreshold: 100,
+  setSvgContainer: undefined,
 };
 
 export default observer(DotGraphVisualizer);
