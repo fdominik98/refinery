@@ -20,7 +20,7 @@ import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
 public final class TrafficSituationMetaModel extends MetaModelInstance {
 	@Override
 	public ModelInitializer createInitializer(Model model) {
-		instance = new TrafficSituationInitializer3(model, this);
+		instance = new TrafficSituationInitializer2(model, this);
 		return instance;
 	}
 

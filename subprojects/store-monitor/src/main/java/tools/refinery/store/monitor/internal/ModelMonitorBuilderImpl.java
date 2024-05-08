@@ -161,11 +161,16 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 			boolean inAccept = false;
 
 			for(State s : monitor.stateMachine.states) {
+				if (!monitor.isReachable(s)) {
+					continue;
+				}
 				for(var entry : monitor.get(s).entrySet()) {
 					var resultSet = queryEngine.getResultSet(entry.getValue().query);
-					weightSum += resultSet.size() * s.weight;
-					if(s.isAccept() && resultSet.size() > 0) {
-						inAccept = true;
+					if (resultSet.size() > 0) {
+						weightSum += resultSet.size() * s.weight;
+						if(s.isAccept()) {
+							inAccept = true;
+						}
 					}
 				}
 			}

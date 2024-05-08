@@ -23,6 +23,10 @@ public class Monitor {
 		return symbols.get(s);
 	}
 
+	public boolean isReachable(State s) {
+		return symbols.containsKey(s);
+	}
+
 	public StateSymbol get(State s, List<NodeVariable> ps) {
 		return symbols.get(s).get(ps);
 	}

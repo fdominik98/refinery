@@ -12,6 +12,7 @@ import tools.refinery.store.dse.transition.DesignSpaceExplorationAdapter;
 import tools.refinery.store.model.ModelStore;
 import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
 import tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy.GestureRecognitionMetaModel;
+import tools.refinery.store.monitor.caseStudies.trafficSituationDemoCaseStudy.TrafficSituationDemoMetaModel;
 import tools.refinery.store.monitor.internal.StateMachineTraversal;
 import tools.refinery.store.monitor.internal.objectives.DummyRandomObjective;
 import tools.refinery.store.monitor.internal.objectives.MonitorFitnessAcceptCriterion;
@@ -31,6 +32,16 @@ class DseWithMonitorTest {
 	boolean viz = false;
 	int warmups = 10;
 	int meas = 30;
+
+	@Test
+		//@Disabled("This test is only for debugging purposes")
+	void TrafficSituationTestForDemo() {
+		int[] solutions = {1};
+		var metaModel = new TrafficSituationDemoMetaModel();
+		runTrajectoryGenerations(metaModel, true,
+				"trafficDemoTestOutput", solutions,
+				0,1,true, 0, true);
+	}
 
 	@Test
 	//@Disabled("This test is only for debugging purposes")
@@ -108,7 +119,6 @@ class DseWithMonitorTest {
 		if (visualization) {
 			storeBuilder.with(ModelVisualizerAdapter.builder()
 					.withOutputPath(outPath)
-					.withFormat(FileFormat.SVG)
 					.withFormat(FileFormat.DOT)
 					.saveStates()
 					.saveDesignSpace()
