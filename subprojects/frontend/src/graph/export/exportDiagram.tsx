@@ -12,15 +12,14 @@ import normalFontURL from '@fontsource/open-sans/files/open-sans-latin-400-norma
 import boldFontURL from '@fontsource/open-sans/files/open-sans-latin-700-normal.woff2?url';
 import variableItalicFontURL from '@fontsource-variable/open-sans/files/open-sans-latin-wght-italic.woff2?url';
 import variableFontURL from '@fontsource-variable/open-sans/files/open-sans-latin-wght-normal.woff2?url';
-import cancelSVG from '@material-icons/svg/svg/cancel/baseline.svg?raw';
-import labelSVG from '@material-icons/svg/svg/label/baseline.svg?raw';
-import labelOutlinedSVG from '@material-icons/svg/svg/label/outline.svg?raw';
 import type { Theme } from '@mui/material/styles';
+import { nanoid } from 'nanoid';
 
 import { darkTheme, lightTheme } from '../../theme/ThemeProvider';
 import { copyBlob, saveBlob } from '../../utils/fileIO';
 import type GraphStore from '../GraphStore';
 import { createGraphTheme } from '../GraphTheme';
+import icons from '../icons';
 import { SVG_NS } from '../postProcessSVG';
 
 import type ExportSettingsStore from './ExportSettingsStore';
@@ -30,23 +29,35 @@ const PNG_CONTENT_TYPE = 'image/png';
 const SVG_CONTENT_TYPE = 'image/svg+xml';
 const EXPORT_ID = 'export-image';
 
-const ICONS: Map<string, Element> = new Map();
-
-function importSVG(svgSource: string, className: string): void {
-  const parser = new DOMParser();
-  const svgDocument = parser.parseFromString(svgSource, SVG_CONTENT_TYPE);
-  const root = svgDocument.children[0];
-  if (root === undefined) {
-    return;
-  }
-  root.id = className;
-  root.classList.add(className);
-  ICONS.set(className, root);
+function fixIDs(id: string, svgDocument: XMLDocument) {
+  const idMap = new Map<string, string>();
+  let i = 0;
+  svgDocument.querySelectorAll('[id]').forEach((node) => {
+    const oldId = node.getAttribute('id');
+    if (oldId === null) {
+      return;
+    }
+    if (oldId.endsWith(',clip')) {
+      const newId = `refinery-${id}-clip-${i}`;
+      i += 1;
+      idMap.set(`url(#${oldId})`, `url(#${newId})`);
+      node.setAttribute('id', newId);
+    } else {
+      node.removeAttribute('id');
+    }
+  });
+  svgDocument.querySelectorAll('[clip-path]').forEach((node) => {
+    const oldPath = node.getAttribute('clip-path');
+    if (oldPath === null) {
+      return;
+    }
+    const newPath = idMap.get(oldPath);
+    if (newPath === undefined) {
+      return;
+    }
+    node.setAttribute('clip-path', newPath);
+  });
 }
-
-importSVG(labelSVG, 'icon-TRUE');
-importSVG(labelOutlinedSVG, 'icon-UNKNOWN');
-importSVG(cancelSVG, 'icon-ERROR');
 
 function addBackground(
   svgDocument: XMLDocument,
@@ -142,68 +153,68 @@ async function fetchVariableFontCSS(): Promise<string> {
   return variableFontCSS;
 }
 
+interface ThemeVariant {
+  selector: string;
+  theme: Theme;
+}
+
 function appendStyles(
+  id: string,
   svgDocument: XMLDocument,
   svg: SVGSVGElement,
-  theme: Theme,
+  themes: ThemeVariant[],
   colorNodes: boolean,
+  hexTypeHashes: string[],
   fontsCSS: string,
 ): void {
-  const cache = createCache({
-    key: 'refinery',
-    container: svg,
-    prepend: true,
-  });
-  // @ts-expect-error `CSSObject` types don't match up between `@mui/material` and
-  // `@emotion/serialize`, but they are compatible in practice.
-  const styles = serializeStyles([createGraphTheme], cache.registered, {
-    theme,
-    colorNodes,
-    noEmbedIcons: true,
-  });
+  const className = `refinery-${id}`;
+  svg.classList.add(className);
   const rules: string[] = [fontsCSS];
-  const sheet = {
-    insert(rule) {
-      rules.push(rule);
-    },
-  } as StyleSheet;
-  cache.insert('', styles, sheet, false);
+  themes.forEach(({ selector, theme }) => {
+    const cache = createCache({
+      key: 'refinery',
+      container: svg,
+      prepend: true,
+    });
+    // @ts-expect-error `CSSObject` types don't match up between `@mui/material` and
+    // `@emotion/serialize`, but they are compatible in practice.
+    const styles = serializeStyles([createGraphTheme], cache.registered, {
+      theme,
+      colorNodes,
+      hexTypeHashes,
+      useOpacity: true,
+    });
+    const sheet = {
+      insert(rule) {
+        rules.push(rule);
+      },
+    } as StyleSheet;
+    cache.insert(`${selector} .${className}`, styles, sheet, false);
+  });
   const styleElement = svgDocument.createElementNS(SVG_NS, 'style');
   svg.prepend(styleElement);
   styleElement.innerHTML = rules.join('');
 }
 
-function fixForeignObjects(svgDocument: XMLDocument, svg: SVGSVGElement): void {
-  const foreignObjects: SVGForeignObjectElement[] = [];
-  svg
-    .querySelectorAll('foreignObject')
-    .forEach((object) => foreignObjects.push(object));
-  foreignObjects.forEach((object) => {
-    const useElement = svgDocument.createElementNS(SVG_NS, 'use');
-    let x = Number(object.getAttribute('x') ?? '0');
-    let y = Number(object.getAttribute('y') ?? '0');
-    const width = Number(object.getAttribute('width') ?? '0');
-    const height = Number(object.getAttribute('height') ?? '0');
-    const size = Math.min(width, height);
-    x += (width - size) / 2;
-    y += (height - size) / 2;
-    useElement.setAttribute('x', String(x));
-    useElement.setAttribute('y', String(y));
-    useElement.setAttribute('width', String(size));
-    useElement.setAttribute('height', String(size));
-    useElement.id = object.id;
-    object.children[0]?.classList?.forEach((className) => {
-      useElement.classList.add(className);
-      if (ICONS.has(className)) {
-        useElement.setAttribute('href', `#${className}`);
-      }
-    });
-    object.replaceWith(useElement);
+function fixIcons(
+  id: string,
+  svgDocument: XMLDocument,
+  svg: SVGSVGElement,
+): void {
+  const prefix = `refinery-${id}-`;
+  const hrefPrefix = `#${prefix}`;
+  svg.querySelectorAll('use').forEach((use) => {
+    const href = use.getAttribute('href');
+    if (href === null) {
+      return;
+    }
+    use.setAttribute('href', href.replace(/^#refinery-/, hrefPrefix));
   });
   const defs = svgDocument.createElementNS(SVG_NS, 'defs');
   svg.prepend(defs);
-  ICONS.forEach((value) => {
+  icons.forEach((value) => {
     const importedValue = svgDocument.importNode(value, true);
+    importedValue.id = `${prefix}${importedValue.id}`;
     defs.appendChild(importedValue);
   });
 }
@@ -320,12 +331,37 @@ export default async function exportDiagram(
     svgDocument.replaceChild(copyOfSVG, originalRoot);
   }
 
-  const theme = settings.theme === 'light' ? lightTheme : darkTheme;
+  const id = nanoid();
+  fixIDs(id, svgDocument);
+
+  let theme: Theme;
+  let themes: ThemeVariant[];
+  if (settings.theme === 'dynamic') {
+    theme = lightTheme;
+    themes = [
+      {
+        selector: '',
+        theme: lightTheme,
+      },
+      {
+        selector: '[data-theme="dark"]',
+        theme: darkTheme,
+      },
+    ];
+  } else {
+    theme = settings.theme === 'light' ? lightTheme : darkTheme;
+    themes = [
+      {
+        selector: '',
+        theme,
+      },
+    ];
+  }
   if (!settings.transparent) {
     addBackground(svgDocument, copyOfSVG, theme);
   }
 
-  fixForeignObjects(svgDocument, copyOfSVG);
+  fixIcons(id, svgDocument, copyOfSVG);
 
   const { colorNodes } = graph;
   let fontsCSS = '';
@@ -336,7 +372,15 @@ export default async function exportDiagram(
   } else if (settings.format === 'svg' && settings.embedFonts) {
     fontsCSS = await fetchFontCSS();
   }
-  appendStyles(svgDocument, copyOfSVG, theme, colorNodes, fontsCSS);
+  appendStyles(
+    id,
+    svgDocument,
+    copyOfSVG,
+    themes,
+    colorNodes,
+    graph.hexTypeHashes,
+    fontsCSS,
+  );
 
   if (settings.format === 'pdf') {
     const pdf = await serializePDF(copyOfSVG, settings);

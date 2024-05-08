@@ -12,7 +12,7 @@ import tools.refinery.store.reasoning.refinement.PartialInterpretationRefiner;
 import tools.refinery.store.reasoning.representation.PartialRelation;
 import tools.refinery.store.reasoning.representation.PartialSymbol;
 import tools.refinery.store.representation.Symbol;
-import tools.refinery.store.representation.TruthValue;
+import tools.refinery.logic.term.truthvalue.TruthValue;
 import tools.refinery.store.tuple.Tuple;
 
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ class ContainmentLinkRefiner extends AbstractPartialInterpretationRefiner<TruthV
 		if (mustLinks.contains(factory.linkType)) {
 			return oldValue;
 		}
-		return new InferredContainment(oldValue.contains().merge(TruthValue.TRUE),
+		return new InferredContainment(oldValue.contains().meet(TruthValue.TRUE),
 				addToSet(mustLinks, factory.linkType), oldValue.forbiddenLinks());
 	}
 
@@ -116,7 +116,7 @@ class ContainmentLinkRefiner extends AbstractPartialInterpretationRefiner<TruthV
 			this.sourceType = sourceType;
 			this.targetType = targetType;
 			trueLink = new InferredContainment(TruthValue.TRUE, Set.of(linkType), Set.of());
-			falseLinkUnknownContains = new InferredContainment(TruthValue.FALSE, Set.of(), Set.of(linkType));
+			falseLinkUnknownContains = new InferredContainment(TruthValue.UNKNOWN, Set.of(), Set.of(linkType));
 		}
 
 		@Override

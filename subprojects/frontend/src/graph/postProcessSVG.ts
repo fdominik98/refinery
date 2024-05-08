@@ -135,6 +135,10 @@ function hrefToClass(node: SVGGElement) {
   });
 }
 
+function parseCoordinate(element: SVGElement, attribute: string): number {
+  return Number(element.getAttribute(attribute)?.replace('px', '') ?? '0');
+}
+
 function replaceImages(node: SVGGElement) {
   node.querySelectorAll<SVGImageElement>('image').forEach((image) => {
     const href =
@@ -142,16 +146,20 @@ function replaceImages(node: SVGGElement) {
     if (href === 'undefined' || !href?.startsWith('#')) {
       return;
     }
-    const width = image.getAttribute('width')?.replace('px', '') ?? '';
-    const height = image.getAttribute('height')?.replace('px', '') ?? '';
-    const foreign = document.createElementNS(SVG_NS, 'foreignObject');
-    foreign.setAttribute('x', image.getAttribute('x') ?? '');
-    foreign.setAttribute('y', image.getAttribute('y') ?? '');
-    foreign.setAttribute('width', width);
-    foreign.setAttribute('height', height);
-    const div = document.createElement('div');
-    div.classList.add('icon', `icon-${href.replace('#', '')}`);
-    foreign.appendChild(div);
+    const width = parseCoordinate(image, 'width');
+    const height = parseCoordinate(image, 'height');
+    const x = parseCoordinate(image, 'x');
+    const y = parseCoordinate(image, 'y');
+    const size = Math.min(width, height);
+    const sizeString = String(size);
+    const use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('x', String(x + (width - size) / 2));
+    use.setAttribute('y', String(y + (height - size) / 2));
+    use.setAttribute('width', sizeString);
+    use.setAttribute('height', sizeString);
+    const iconName = `icon-${href.replace('#', '')}`;
+    use.setAttribute('href', `#refinery-${iconName}`);
+    use.classList.add('icon', iconName);
     const sibling = image.nextElementSibling;
     // Since dot doesn't respect the `id` attribute on table cells with a single image,
     // compute the ID based on the ID of the next element (the label).
@@ -160,9 +168,9 @@ function replaceImages(node: SVGGElement) {
       sibling.tagName.toLowerCase() === 'g' &&
       sibling.id !== ''
     ) {
-      foreign.id = `${sibling.id},icon`;
+      use.id = `${sibling.id},icon`;
     }
-    image.parentNode?.replaceChild(foreign, image);
+    image.parentNode?.replaceChild(use, image);
   });
 }
 
@@ -193,14 +201,11 @@ function markerColorToClass(svg: SVGSVGElement) {
 }
 
 export default function postProcessSvg(svg: SVGSVGElement) {
-  // svg
-  //   .querySelectorAll<SVGTitleElement>('title')
-  //   .forEach((title) => title.parentElement?.removeChild(title));
   svg.querySelectorAll<SVGGElement>('g.node').forEach((node) => {
     optimizeNodeShapes(node);
     hrefToClass(node);
-    replaceImages(node);
   });
+  replaceImages(svg);
   // Increase padding to fit box shadows for multi-objects.
   const viewBox = [
     svg.viewBox.baseVal.x - 6,

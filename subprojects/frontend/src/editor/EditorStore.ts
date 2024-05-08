@@ -111,6 +111,8 @@ export default class EditorStore {
 
   unsavedChanges = false;
 
+  hexTypeHashes: string[] = [];
+
   constructor(
     initialValue: string,
     pwaStore: PWAStore,
@@ -216,7 +218,19 @@ export default class EditorStore {
     contentDOM.removeAttribute('aria-expanded');
     contentDOM.setAttribute('aria-label', 'Code editor');
 
+    this.scrollToTop();
+
     log.info('Editor created');
+  }
+
+  private scrollToTop() {
+    if (this.view === undefined) {
+      return;
+    }
+    const {
+      view: { scrollDOM },
+    } = this;
+    scrollDOM.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }
 
   dispatch(...specs: readonly TransactionSpec[]): void {
@@ -275,8 +289,12 @@ export default class EditorStore {
     this.doCommand(nextDiagnostic);
   }
 
-  updateSemanticHighlighting(ranges: IHighlightRange[]): void {
+  updateSemanticHighlighting(
+    ranges: IHighlightRange[],
+    hexTypeHashes: string[],
+  ): void {
     this.dispatch(setSemanticHighlighting(ranges));
+    this.hexTypeHashes = hexTypeHashes;
   }
 
   updateOccurrences(write: IOccurrence[], read: IOccurrence[]): void {
@@ -470,6 +488,7 @@ export default class EditorStore {
       ],
       effects: [historyCompartment.reconfigure([])],
     });
+    this.scrollToTop();
     // Clear history by removing and re-adding the history extension. See
     // https://stackoverflow.com/a/77943295 and
     // https://discuss.codemirror.net/t/codemirror-6-cm-clearhistory-equivalent/2851/10

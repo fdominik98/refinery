@@ -5,6 +5,7 @@
  */
 
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import {
   DataGrid,
   type GridRenderCellParams,
@@ -14,6 +15,7 @@ import { observer } from 'mobx-react-lite';
 import { useMemo } from 'react';
 
 import type GraphStore from '../graph/GraphStore';
+import RelationName from '../graph/RelationName';
 
 import TableToolbar from './TableToolbar';
 import ValueRenderer from './ValueRenderer';
@@ -21,6 +23,61 @@ import ValueRenderer from './ValueRenderer';
 interface Row {
   nodes: string[];
   value: string;
+}
+
+declare module '@mui/x-data-grid' {
+  // Declare our custom prop type for `TableToolbar`.
+  interface ToolbarPropsOverrides {
+    graph: GraphStore;
+  }
+
+  interface NoRowsOverlayPropsOverrides {
+    graph: GraphStore;
+  }
+
+  interface NoResultsOverlayPropsOverrides {
+    graph: GraphStore;
+  }
+}
+
+const noSymbolMessage =
+  'Please select a symbol from the list to view its interpretation';
+
+function NoRowsOverlay({
+  graph: { selectedSymbol },
+}: {
+  graph: GraphStore;
+}): JSX.Element {
+  return (
+    <Stack height="100%" alignItems="center" justifyContent="center">
+      {selectedSymbol === undefined ? (
+        noSymbolMessage
+      ) : (
+        <span>
+          Interpretation of <RelationName metadata={selectedSymbol} /> is empty
+        </span>
+      )}
+    </Stack>
+  );
+}
+
+function NoResultsOverlay({
+  graph: { selectedSymbol },
+}: {
+  graph: GraphStore;
+}): JSX.Element {
+  return (
+    <Stack height="100%" alignItems="center" justifyContent="center">
+      {selectedSymbol === undefined ? (
+        noSymbolMessage
+      ) : (
+        <span>
+          No results in the interpretation of{' '}
+          <RelationName metadata={selectedSymbol} />
+        </span>
+      )}
+    </Stack>
+  );
 }
 
 function TableArea({ graph }: { graph: GraphStore }): JSX.Element {
@@ -37,7 +94,7 @@ function TableArea({ graph }: { graph: GraphStore }): JSX.Element {
       defs.push({
         field: `n${i}`,
         headerName: String(i + 1),
-        valueGetter: (row) => row.row.nodes[i] ?? '',
+        valueGetter: (_, row) => row.nodes[i] ?? '',
         flex: 1,
       });
     }
@@ -90,13 +147,23 @@ function TableArea({ graph }: { graph: GraphStore }): JSX.Element {
       })}
     >
       <DataGrid
-        slots={{ toolbar: TableToolbar }}
+        slots={{
+          toolbar: TableToolbar,
+          noRowsOverlay: NoRowsOverlay,
+          noResultsOverlay: NoResultsOverlay,
+        }}
         slotProps={{
           toolbar: {
             graph,
           },
+          noRowsOverlay: {
+            graph,
+          },
+          noResultsOverlay: {
+            graph,
+          },
         }}
-        density="compact"
+        initialState={{ density: 'compact' }}
         rowSelection={false}
         columns={columns}
         rows={rows}

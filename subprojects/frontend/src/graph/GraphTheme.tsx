@@ -4,18 +4,16 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-import cancelSVG from '@material-icons/svg/svg/cancel/baseline.svg?raw';
-import labelSVG from '@material-icons/svg/svg/label/baseline.svg?raw';
-import labelOutlinedSVG from '@material-icons/svg/svg/label/outline.svg?raw';
 import {
   alpha,
   styled,
   type CSSObject,
   type Theme,
 } from '@mui/material/styles';
+import { lch } from 'd3-color';
 import { range } from 'lodash-es';
 
-import svgURL from '../utils/svgURL';
+import obfuscateColor from './obfuscateColor';
 
 function createEdgeColor(
   suffix: string,
@@ -37,43 +35,45 @@ function createEdgeColor(
   };
 }
 
-function createTypeHashStyles(theme: Theme, colorNodes: boolean): CSSObject {
+function createTypeHashStyles(
+  theme: Theme,
+  colorNodes: boolean,
+  typeHashes: string[],
+): CSSObject {
   if (!colorNodes) {
     return {};
   }
   const result: CSSObject = {};
   range(theme.palette.highlight.typeHash.length).forEach((i) => {
-    result[`.node-typeHash-${i} .node-header`] = {
+    result[`.node-typeHash-${obfuscateColor(i.toString(10))} .node-header`] = {
       fill: theme.palette.highlight.typeHash[i]?.box,
+    };
+  });
+  typeHashes.forEach((typeHash) => {
+    let color = lch(`#${typeHash}`);
+    if (theme.palette.mode === 'dark') {
+      color = color.darker();
+      if (color.l > 50) {
+        color.l = 50;
+      }
+    }
+    result[`.node-typeHash-_${obfuscateColor(typeHash)} .node-header`] = {
+      fill: color.formatRgb(),
     };
   });
   return result;
 }
 
-function iconStyle(
-  svg: string,
-  color: string,
-  noEmbedIcons?: boolean,
-): CSSObject {
-  if (noEmbedIcons) {
-    return {
-      fill: color,
-    };
-  }
-  return {
-    maskImage: svgURL(svg),
-    background: color,
-  };
-}
-
 export function createGraphTheme({
   theme,
   colorNodes,
-  noEmbedIcons,
+  hexTypeHashes,
+  useOpacity,
 }: {
   theme: Theme;
   colorNodes: boolean;
-  noEmbedIcons?: boolean;
+  hexTypeHashes: string[];
+  useOpacity?: boolean;
 }): CSSObject {
   const shadowAlapha = theme.palette.mode === 'dark' ? 0.32 : 0.24;
 
@@ -99,19 +99,21 @@ export function createGraphTheme({
     '.node-INDIVIDUAL .node-outline': {
       strokeWidth: 2,
     },
-    '.node-shadow.node-bg': noEmbedIcons
+    '.node-shadow.node-bg': useOpacity
       ? {
-          // Inkscape can't handle opacity in exported SVG.
+          // Inkscape can't handle RGBA in exported SVG.
           fill: theme.palette.text.primary,
           opacity: shadowAlapha,
         }
       : {
+          // But using `opacity` with the transition animation leads to flashing shadows,
+          // so we still use RGBA whenever possible.
           fill: alpha(theme.palette.text.primary, shadowAlapha),
         },
     '.node-exists-UNKNOWN .node-outline': {
       strokeDasharray: '5 2',
     },
-    ...createTypeHashStyles(theme, colorNodes),
+    ...createTypeHashStyles(theme, colorNodes, hexTypeHashes),
     '.edge': {
       '& text': {
         fontFamily: theme.typography.fontFamily,
@@ -126,24 +128,15 @@ export function createGraphTheme({
     },
     ...createEdgeColor('UNKNOWN', theme.palette.text.secondary, 'none'),
     ...createEdgeColor('ERROR', theme.palette.error.main),
-    ...(noEmbedIcons
-      ? {}
-      : {
-          '.icon': {
-            maskSize: '12px 12px',
-            maskPosition: '50% 50%',
-            maskRepeat: 'no-repeat',
-            width: '100%',
-            height: '100%',
-          },
-        }),
-    '.icon-TRUE': iconStyle(labelSVG, theme.palette.text.primary, noEmbedIcons),
-    '.icon-UNKNOWN': iconStyle(
-      labelOutlinedSVG,
-      theme.palette.text.secondary,
-      noEmbedIcons,
-    ),
-    '.icon-ERROR': iconStyle(cancelSVG, theme.palette.error.main, noEmbedIcons),
+    '.icon-TRUE': {
+      fill: theme.palette.text.primary,
+    },
+    '.icon-UNKNOWN': {
+      fill: theme.palette.text.secondary,
+    },
+    '.icon-ERROR': {
+      fill: theme.palette.error.main,
+    },
     'text.label-UNKNOWN': {
       fill: theme.palette.text.secondary,
     },
@@ -155,7 +148,9 @@ export function createGraphTheme({
 
 export default styled('div', {
   name: 'GraphTheme',
-})<{ colorNodes: boolean }>((args) => ({
+  shouldForwardProp: (prop) =>
+    prop !== 'colorNodes' && prop !== 'hexTypeHashes',
+})<{ colorNodes: boolean; hexTypeHashes: string[] }>((args) => ({
   '& svg': {
     userSelect: 'none',
     ...createGraphTheme(args),
