@@ -2,9 +2,9 @@ package tools.refinery.store.monitor.internal.model;
 
 import tools.refinery.store.monitor.internal.actions.TransitionAction;
 import tools.refinery.store.monitor.internal.guards.Guard;
-import tools.refinery.store.query.dnf.SymbolicParameter;
-import tools.refinery.store.query.term.NodeVariable;
-import tools.refinery.store.query.term.Variable;
+import tools.refinery.logic.dnf.SymbolicParameter;
+import tools.refinery.logic.term.NodeVariable;
+import tools.refinery.logic.term.Variable;
 import java.util.*;
 
 public class Transition {

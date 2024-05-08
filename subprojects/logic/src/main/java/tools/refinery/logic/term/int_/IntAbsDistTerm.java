@@ -3,10 +3,10 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package tools.refinery.store.query.term.int_;
+package tools.refinery.logic.term.int_;
 
-import tools.refinery.store.query.substitution.Substitution;
-import tools.refinery.store.query.term.Term;
+import tools.refinery.logic.substitution.Substitution;
+import tools.refinery.logic.term.Term;
 
 import static java.lang.Math.abs;
 

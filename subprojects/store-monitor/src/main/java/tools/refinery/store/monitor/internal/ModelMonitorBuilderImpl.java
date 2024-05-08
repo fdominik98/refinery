@@ -9,19 +9,19 @@ import tools.refinery.store.model.ModelStoreBuilder;
 import tools.refinery.store.monitor.internal.terms.ClockValueTerm;
 import tools.refinery.store.query.ModelQueryAdapter;
 import tools.refinery.store.query.ModelQueryBuilder;
-import tools.refinery.store.query.dnf.AnyQuery;
-import tools.refinery.store.query.dnf.Query;
-import tools.refinery.store.query.literal.*;
-import tools.refinery.store.query.term.ConstantTerm;
-import tools.refinery.store.query.term.DataVariable;
-import tools.refinery.store.query.term.NodeVariable;
-import tools.refinery.store.query.term.Variable;
+import tools.refinery.logic.dnf.AnyQuery;
+import tools.refinery.logic.dnf.Query;
+import tools.refinery.logic.literal.*;
+import tools.refinery.logic.term.ConstantTerm;
+import tools.refinery.logic.term.DataVariable;
+import tools.refinery.logic.term.NodeVariable;
+import tools.refinery.logic.term.Variable;
 import tools.refinery.store.query.view.FunctionView;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
 import java.util.*;
 import java.util.function.Consumer;
-import static tools.refinery.store.query.literal.Literals.check;
+import static tools.refinery.logic.literal.Literals.check;
 
 public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMonitorStoreAdapterImpl>
 		implements ModelMonitorBuilder{

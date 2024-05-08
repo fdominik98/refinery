@@ -1,8 +1,8 @@
 package tools.refinery.store.monitor.internal.model;
 
 import tools.refinery.store.monitor.internal.terms.ClockValueTerm;
-import tools.refinery.store.query.term.DataVariable;
-import tools.refinery.store.query.term.Term;
+import tools.refinery.logic.term.DataVariable;
+import tools.refinery.logic.term.Term;
 
 public abstract class TimeConstraint {
 	public final Clock clock;

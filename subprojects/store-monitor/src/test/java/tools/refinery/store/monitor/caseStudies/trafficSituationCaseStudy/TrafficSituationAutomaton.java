@@ -3,7 +3,7 @@ package tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy;
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.internal.guards.Guard;
 import tools.refinery.store.monitor.internal.model.*;
-import tools.refinery.store.query.term.NodeVariable;
+import tools.refinery.logic.term.NodeVariable;
 
 public class TrafficSituationAutomaton extends AutomatonInstance {
 	public final State s2;

@@ -1,7 +1,7 @@
 package tools.refinery.store.monitor.internal.guards;
 
 import tools.refinery.store.monitor.internal.model.TimeConstraint;
-import tools.refinery.store.query.dnf.RelationalQuery;
+import tools.refinery.logic.dnf.RelationalQuery;
 
 public class Guard {
 	public boolean negated = false;

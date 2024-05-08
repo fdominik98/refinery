@@ -2,9 +2,9 @@ package tools.refinery.store.monitor.internal.terms;
 
 import tools.refinery.store.monitor.internal.model.Clock;
 import tools.refinery.store.monitor.internal.model.ClockHolder;
-import tools.refinery.store.query.substitution.Substitution;
-import tools.refinery.store.query.term.BinaryTerm;
-import tools.refinery.store.query.term.Term;
+import tools.refinery.logic.substitution.Substitution;
+import tools.refinery.logic.term.BinaryTerm;
+import tools.refinery.logic.term.Term;
 
 public class ClockValueTerm extends BinaryTerm<Integer, ClockHolder, Clock> {
 

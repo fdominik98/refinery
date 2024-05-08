@@ -3,9 +3,9 @@ package tools.refinery.store.monitor.internal.guards;
 import tools.refinery.store.monitor.internal.model.Clock;
 import tools.refinery.store.monitor.internal.model.TimeConstraint;
 import tools.refinery.store.monitor.internal.terms.ClockValueTerm;
-import tools.refinery.store.query.term.DataVariable;
-import tools.refinery.store.query.term.Term;
-import static tools.refinery.store.query.term.int_.IntTerms.*;
+import tools.refinery.logic.term.DataVariable;
+import tools.refinery.logic.term.Term;
+import static tools.refinery.logic.term.int_.IntTerms.*;
 
 public class ClockGreaterThanTimeConstraint extends TimeConstraint {
 	public ClockGreaterThanTimeConstraint(Clock clock, int value) {

@@ -6,9 +6,9 @@ import tools.refinery.store.monitor.internal.guards.ClockGreaterThanTimeConstrai
 import tools.refinery.store.monitor.internal.guards.ClockLessOrEqThanTimeConstraint;
 import tools.refinery.store.monitor.internal.guards.Guard;
 import tools.refinery.store.monitor.internal.model.*;
-import tools.refinery.store.query.dnf.Query;
-import tools.refinery.store.query.literal.CallPolarity;
-import tools.refinery.store.query.term.Variable;
+import tools.refinery.logic.dnf.Query;
+import tools.refinery.logic.literal.CallPolarity;
+import tools.refinery.logic.term.Variable;
 
 public class SenderReceiverAutomaton extends AutomatonInstance {
 

@@ -8,20 +8,20 @@ import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
 import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.store.monitor.utils.VectorYTerm;
-import tools.refinery.store.query.dnf.Query;
-import tools.refinery.store.query.dnf.RelationalQuery;
-import tools.refinery.store.query.literal.CallPolarity;
-import tools.refinery.store.query.term.DataVariable;
-import tools.refinery.store.query.term.NodeVariable;
-import tools.refinery.store.query.term.Variable;
+import tools.refinery.logic.dnf.Query;
+import tools.refinery.logic.dnf.RelationalQuery;
+import tools.refinery.logic.literal.CallPolarity;
+import tools.refinery.logic.term.DataVariable;
+import tools.refinery.logic.term.NodeVariable;
+import tools.refinery.logic.term.Variable;
 import tools.refinery.store.query.view.AnySymbolView;
 import tools.refinery.store.query.view.FunctionView;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 import java.util.List;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.*;
-import static tools.refinery.store.query.literal.Literals.check;
-import static tools.refinery.store.query.term.int_.IntTerms.*;
+import static tools.refinery.logic.literal.Literals.check;
+import static tools.refinery.logic.term.int_.IntTerms.*;
 
 public class GestureRecognitionMetaModel extends MetaModelInstance {
 	@Override

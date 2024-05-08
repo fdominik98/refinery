@@ -6,7 +6,7 @@ import tools.refinery.store.monitor.internal.guards.ClockGreaterThanTimeConstrai
 import tools.refinery.store.monitor.internal.guards.Guard;
 import tools.refinery.store.monitor.internal.model.Clock;
 import tools.refinery.store.monitor.internal.model.State;
-import tools.refinery.store.query.term.NodeVariable;
+import tools.refinery.logic.term.NodeVariable;
 
 public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 	public final State s2;

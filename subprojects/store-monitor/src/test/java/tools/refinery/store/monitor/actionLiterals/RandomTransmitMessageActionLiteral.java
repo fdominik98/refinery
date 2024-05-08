@@ -3,7 +3,7 @@ package tools.refinery.store.monitor.actionLiterals;
 import tools.refinery.store.dse.transition.actions.ActionLiteral;
 import tools.refinery.store.dse.transition.actions.BoundActionLiteral;
 import tools.refinery.store.model.Model;
-import tools.refinery.store.query.term.NodeVariable;
+import tools.refinery.logic.term.NodeVariable;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;
 import java.util.List;

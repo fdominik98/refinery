@@ -18,9 +18,9 @@ import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.Traffi
 import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationAutomaton;
 import tools.refinery.store.monitor.caseStudies.trafficSituationCaseStudy.TrafficSituationMetaModel;
 import tools.refinery.store.query.ModelQueryAdapter;
-import tools.refinery.store.query.dnf.Query;
+import tools.refinery.logic.dnf.Query;
 import tools.refinery.store.query.interpreter.QueryInterpreterAdapter;
-import tools.refinery.store.query.term.Variable;
+import tools.refinery.logic.term.Variable;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 import tools.refinery.store.tuple.Tuple;

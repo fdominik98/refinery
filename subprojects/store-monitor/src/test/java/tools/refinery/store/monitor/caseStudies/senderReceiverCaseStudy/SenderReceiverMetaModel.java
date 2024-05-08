@@ -7,8 +7,8 @@ import tools.refinery.store.monitor.actionLiterals.RandomTransmitMessageActionLi
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
 import tools.refinery.store.monitor.caseStudies.ModelInitializer;
-import tools.refinery.store.query.literal.CallPolarity;
-import tools.refinery.store.query.term.Variable;
+import tools.refinery.logic.literal.CallPolarity;
+import tools.refinery.logic.term.Variable;
 import tools.refinery.store.query.view.AnySymbolView;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;

@@ -1,7 +1,7 @@
 package tools.refinery.store.monitor.internal;
 
 import tools.refinery.store.monitor.internal.model.*;
-import tools.refinery.store.query.term.NodeVariable;
+import tools.refinery.logic.term.NodeVariable;
 import tools.refinery.store.representation.Symbol;
 import java.util.*;
 
