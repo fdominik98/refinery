@@ -25,6 +25,7 @@ public class StateMachineTraversal {
 
 	private void getStateMap(State startState) {
 		Queue<BFSNode> queue = new LinkedList<>();
+		Set<String> representationList = new HashSet<>();
 
 		// Starting node
 		queue.add(new BFSNode(startState, new ArrayList<>()));
@@ -35,10 +36,13 @@ public class StateMachineTraversal {
 			// Generate string representation
 			String representation = currentNode.state.toString() + currentNode.parameters.toString();
 
-			var symbol = new StateSymbol(Symbol.of(representation, currentNode.parameters.size(), ClockHolder.class,
-					null));
+			if (!representationList.contains(representation)) {
+				var symbol = new StateSymbol(Symbol.of(representation, currentNode.parameters.size(), ClockHolder.class,
+						null));
+				monitor.put(currentNode.state, new ArrayList<>(currentNode.parameters), symbol);
+				representationList.add(representation);
+			}
 
-			monitor.put(currentNode.state, new ArrayList<>(currentNode.parameters), symbol);
 
 			// Process outgoing transitions
 			for (Transition transition : currentNode.state.transitionsOut) {

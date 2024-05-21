@@ -1,6 +1,9 @@
 package tools.refinery.store.monitor.caseStudies.trafficSituationDemoCaseStudy;
 
-import tools.refinery.interpreter.rete.network.Node;
+import tools.refinery.logic.term.DataVariable;
+import tools.refinery.logic.term.Variable;
+import tools.refinery.logic.term.int_.IntTerms;
+import tools.refinery.logic.term.real.RealTerms;
 import tools.refinery.store.dse.transition.Rule;
 import tools.refinery.store.dse.transition.RuleBuilder;
 import tools.refinery.store.dse.transition.actions.ActionLiteral;
@@ -11,18 +14,26 @@ import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
 import tools.refinery.store.monitor.caseStudies.ModelInitializer;
 import tools.refinery.logic.dnf.Query;
 import tools.refinery.logic.dnf.RelationalQuery;
-import tools.refinery.logic.literal.CallLiteral;
 import tools.refinery.logic.literal.CallPolarity;
 import tools.refinery.logic.literal.Literal;
 import tools.refinery.logic.term.NodeVariable;
+import tools.refinery.store.monitor.utils.Vector;
+import tools.refinery.store.monitor.utils.VectorTerms;
+import tools.refinery.store.query.view.FunctionView;
 import tools.refinery.store.query.view.KeyOnlyView;
 import tools.refinery.store.representation.Symbol;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static tools.refinery.logic.literal.Literals.check;
+import static tools.refinery.logic.term.bool.BoolTerms.and;
+import static tools.refinery.logic.term.bool.BoolTerms.or;
+import static tools.refinery.logic.term.real.RealTerms.*;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.add;
 import static tools.refinery.store.dse.transition.actions.ActionLiterals.remove;
+import static tools.refinery.store.monitor.utils.VectorTerms.*;
+
 
 public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 	@Override
@@ -38,22 +49,14 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 		public CarMovementVariables(RuleBuilder builder) {
 			builder.parameters(car, cell1, cell2);
 		}
-	};
+	}
 
-	public Symbol<Boolean> cellSymbol = Symbol.of("Cell", 1);
-	public KeyOnlyView<Boolean> cellView = new KeyOnlyView<>(cellSymbol);
-	public Symbol<Boolean> behindSymbol = Symbol.of("Behind", 2);
-	public KeyOnlyView<Boolean> behindView = new KeyOnlyView<>(behindSymbol);
-	public Symbol<Boolean> inFrontSymbol = Symbol.of("InFront", 2);
-	public KeyOnlyView<Boolean> inFrontView = new KeyOnlyView<>(inFrontSymbol);
-	public Symbol<Boolean> toLeftSymbol = Symbol.of("ToLeft", 2);
-	public KeyOnlyView<Boolean> toLeftView = new KeyOnlyView<>(toLeftSymbol);
-	public Symbol<Boolean> toRightSymbol = Symbol.of("ToRight", 2);
-	public KeyOnlyView<Boolean> toRightView = new KeyOnlyView<>(toRightSymbol);
+	public Symbol<Vector> cellSymbol = Symbol.of("Cell", 1, Vector.class);
+	public FunctionView<Vector> cellView = new FunctionView<>(cellSymbol);
 	public Symbol<Boolean> onCellSymbol = Symbol.of("OnCell", 2);
 	public KeyOnlyView<Boolean> onCellView = new KeyOnlyView<>(onCellSymbol);
-	public Symbol<Boolean> carSymbol = Symbol.of("Car", 1);
-	public KeyOnlyView<Boolean> carView = new KeyOnlyView<>(carSymbol);
+	public Symbol<Integer> carSymbol = Symbol.of("Car", 1, Integer.class);
+	public FunctionView<Integer> carView = new FunctionView<>(carSymbol);
 	public Symbol<Boolean> egoSymbol = Symbol.of("Ego", 1);
 	public KeyOnlyView<Boolean> egoView = new KeyOnlyView<>(egoSymbol);
 	public Symbol<Boolean> forwardLaneSymbol = Symbol.of("ForwardLane", 1);
@@ -72,10 +75,6 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 		super();
 
 		addSymbol(cellSymbol);
-		addSymbol(behindSymbol);
-		addSymbol(inFrontSymbol);
-		addSymbol(toLeftSymbol);
-		addSymbol(toRightSymbol);
 		addSymbol(onCellSymbol);
 		addSymbol(carSymbol);
 		addSymbol(egoSymbol);
@@ -88,37 +87,58 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 
 		RelationalQuery neighborhoodPrecondition = Query.of("neighborhoodPrecondition",
 				(builder, car, cell1, cell2) ->{
-					var intermediateCell = NodeVariable.of();
+					DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
+					DataVariable<Vector> cell2Vector = Variable.of(Vector.class);
+
 					builder.clause(
-									forwardIntent.call(car),
-									behindView.call(cell1, cell2)
-							)
-							.clause(
-									forwardIntent.call(car),
-									toRightView.call(cell1, intermediateCell),
-									behindView.call(intermediateCell, cell2)
-							)
-							.clause(
-									forwardIntent.call(car),
-									toLeftView.call(cell1, intermediateCell),
-									behindView.call(intermediateCell, cell2)
+							cellView.call(cell1, cell1Vector),
+							cellView.call(cell2, cell2Vector),
+							onCellView.call(car, cell1),
+							forwardIntent.call(car),
+							check(
+									or(
+										or(
+											isInDirection(cell1Vector, cell2Vector, 0, 1),
+												isInDirection(cell1Vector, cell2Vector, 1, 1)
+										),
+											isInDirection(cell1Vector, cell2Vector, -1, 1)
+									)
+								)
 							).clause(
-									reverseIntent.call(car),
-									inFrontView.call(cell1, cell2)
-							)
-							.clause(
-									reverseIntent.call(car),
-									toRightView.call(cell1, intermediateCell),
-									inFrontView.call(intermediateCell, cell2)
-							)
-							.clause(
-									reverseIntent.call(car),
-									toLeftView.call(cell1, intermediateCell),
-									inFrontView.call(intermediateCell, cell2)
+								cellView.call(cell1, cell1Vector),
+								cellView.call(cell2, cell2Vector),
+								onCellView.call(car, cell1),
+								reverseIntent.call(car),
+								check(
+									or(
+										or(
+											isInDirection(cell1Vector, cell2Vector, 0, -1),
+											isInDirection(cell1Vector, cell2Vector, -1, -1)
+										),
+										isInDirection(cell1Vector, cell2Vector, 1, -1)
+									)
+								)
 							).clause(
-									onCellView.call(car, cell1),
-									toLeftView.call(cell1, intermediateCell),
-									toRightView.call(intermediateCell, cell2)
+								onCellView.call(car, cell1),
+								cell1.isEquivalent(cell2)
+							);
+				}
+		);
+
+		RelationalQuery swappingCells = Query.of("swappingCells",
+				(builder) ->{
+					var car1 = NodeVariable.of();
+					var aCell1 = NodeVariable.of();
+					var aCell2 = NodeVariable.of();
+					var car2 = NodeVariable.of();
+					var bCell1 = NodeVariable.of();
+					var bCell2 = NodeVariable.of();
+					builder.parameters(car1, aCell1, aCell2, car2, bCell1, bCell2);
+					builder.clause(
+								onCellView.call(car1, aCell1),
+								onCellView.call(car2, bCell1),
+								onCellView.call(car1, bCell2),
+								onCellView.call(car2, aCell2)
 							);
 				}
 		);
@@ -130,7 +150,9 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 			List<CarMovementVariables> variables = new ArrayList<>();
 			for (int i = 0; i < carCount; i++) {
 				CarMovementVariables variable = new CarMovementVariables(builder);
-				callLiterals.add(onCellView.call(variable.car, variable.cell1));
+				DataVariable<Integer> idVar = DataVariable.of(Integer.class);
+				callLiterals.add(carView.call(variable.car, idVar));
+				callLiterals.add(check(IntTerms.eq(idVar, IntTerms.constant(i))));
 				callLiterals.add(neighborhoodPrecondition.call(variable.car, variable.cell1, variable.cell2));
 
 				actionLiterals.add(remove(onCellSymbol, variable.car, variable.cell1));
@@ -140,8 +162,15 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 
 			for (int i = 0; i < carCount -1; i++) {
 				for (int j = i + 1; j < carCount; j++) {
+					var aCell1 = variables.get(i).cell1;
+					var aCell2 = variables.get(i).cell2;
+					var bCell1 = variables.get(j).cell1;
+					var bCell2 = variables.get(j).cell2;
 					callLiterals.add(variables.get(i).car.notEquivalent(variables.get(j).car));
-					callLiterals.add(variables.get(i).cell2.notEquivalent(variables.get(j).cell2));
+					callLiterals.add(aCell2.notEquivalent(bCell2));
+					callLiterals.add(swappingCells.call(CallPolarity.NEGATIVE,
+							variables.get(i).car, aCell1, aCell2,
+							variables.get(j).car, bCell1, bCell2));
 				}
 			}
 			actionLiterals.add(new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1));
@@ -156,6 +185,14 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 		builder.clause(
 				forwardLaneView.call(lane),
 				intendedLaneView.call(car, lane)
+		);}
+	);
+
+	private final RelationalQuery onLane = Query.of((builder, car, lane) -> {
+		var cell = NodeVariable.of();
+		builder.clause(
+				containingLaneView.call(cell, lane),
+				onCellView.call(car, cell)
 		);}
 	);
 
@@ -175,129 +212,182 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 		)
 	);
 
-	public RelationalQuery isDistance1(NodeVariable car1, NodeVariable car2) {
+	public RelationalQuery egoIsBehindCar(NodeVariable ego, NodeVariable car) {
 		return Query.of(builder -> {
-			builder.parameters(car1, car2);
-			builder.clause(isInDirection(car1, car2, -1, -1).call(car1, car2))
-					.clause(isInDirection(car1, car2, 0, -1).call(car1, car2))
-					.clause(isInDirection(car1, car2, 1, -1).call(car1, car2))
-					.clause(isInDirection(car1, car2, -1, 0).call(car1, car2))
-					.clause(isInDirection(car1, car2, 1, 0).call(car1, car2))
-					.clause(isInDirection(car1, car2, -1, 1).call(car1, car2))
-					.clause(isInDirection(car1, car2, 0, 1).call(car1, car2))
-					.clause(isInDirection(car1, car2, 1, 1).call(car1, car2));
+			builder.parameters(ego, car);
+			builder.clause(
+				egoView.call(ego),
+				isInFront(car, ego).call(car, ego),
+				onOwnLane(ego).call(ego),
+				onOwnLane(car).call(car),
+				isInLine(ego, car).call(ego, car));
 		});
 	}
 
-	public RelationalQuery isEgoDistance2(NodeVariable car1, NodeVariable car2) {
+	public RelationalQuery otherCarAppearedInFront(NodeVariable car1, NodeVariable car2) {
 		return Query.of(builder -> {
 			builder.parameters(car1, car2);
 			builder.clause(
-				egoView.call(car1),
-				isDistance2(car1, car2).call(car1, car2));
+				otherCarOnLane(car1, car2).call(car1, car2),
+				isInFront(car2, car1).call(car2, car1));
 		});
 	}
 
-	public RelationalQuery isEgoDistance1(NodeVariable car1, NodeVariable car2) {
+	public RelationalQuery egoInFrontOfCar(NodeVariable ego, NodeVariable car1, NodeVariable car2) {
 		return Query.of(builder -> {
-			builder.parameters(car1, car2);
+			builder.parameters(ego, car1, car2);
 			builder.clause(
-					egoView.call(car1),
-					isDistance1(car1, car2).call(car1, car2));
+					isDistanceGreater(ego, car2, 2.0).call(ego, car2),
+					isInFront(ego, car1).call(ego, car1));
 		});
 	}
 
-	public RelationalQuery isDistance2(NodeVariable car1, NodeVariable car2) {
-		return Query.of(builder -> {
-			builder.parameters(car1, car2);
-			builder.clause(isInDirection(car1, car2, -2, -2).call(car1, car2))
-					.clause(isInDirection(car1, car2, -1, -2).call(car1, car2))
-					.clause(isInDirection(car1, car2, 0, -2).call(car1, car2))
-					.clause(isInDirection(car1, car2, 1, -2).call(car1, car2))
-					.clause(isInDirection(car1, car2, 2, -2).call(car1, car2))
-					.clause(isInDirection(car1, car2, 2, -1).call(car1, car2))
-					.clause(isInDirection(car1, car2, 2, 0).call(car1, car2))
-					.clause(isInDirection(car1, car2, 2, 1).call(car1, car2))
-					.clause(isInDirection(car1, car2, 2, 2).call(car1, car2))
-					.clause(isInDirection(car1, car2, 1, 2).call(car1, car2))
-					.clause(isInDirection(car1, car2, 0, 2).call(car1, car2))
-					.clause(isInDirection(car1, car2, -1, 2).call(car1, car2))
-					.clause(isInDirection(car1, car2, -2, 2).call(car1, car2))
-					.clause(isInDirection(car1, car2, -2, 1).call(car1, car2))
-					.clause(isInDirection(car1, car2, -2, 0).call(car1, car2))
-					.clause(isInDirection(car1, car2, -2, -1).call(car1, car2));
-		});
-	}
-
-	public RelationalQuery isInZone1(NodeVariable car1, NodeVariable car2) {
-		return Query.of(builder -> {
-			builder.parameters(car1, car2);
-			builder.clause(isInDirection(car1, car2, 0, 0).call(car1, car2))
-					.clause(isDistance1(car1, car2).call(car1, car2));
-		});
-	}
-	public RelationalQuery isInZone2(NodeVariable car1, NodeVariable car2) {
-		return Query.of(builder -> {
-			builder.parameters(car1, car2);
-			builder.clause(isInZone1(car1, car2).call(car1, car2))
-					.clause(isDistance2(car1, car2).call(car1, car2));
-		});
-	}
-
-	public RelationalQuery isInDirection(NodeVariable car1, NodeVariable car2, int x, int y) {
+	public RelationalQuery isDistance(NodeVariable car1, NodeVariable car2, int dist) {
 		return Query.of(builder -> {
 			var cell1 = NodeVariable.of();
 			var cell2 = NodeVariable.of();
 			builder.parameters(car1, car2);
-			List<Literal> literals = new ArrayList<>();
-			literals.add(placedOnCells.call(car1, cell1, car2, cell2));
+			DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
+			DataVariable<Vector> cell2Vector = Variable.of(Vector.class);
+			var distTerm = distance(cell1Vector, cell2Vector);
 
-			if(x == 0 && y == 0) {
-				literals.add(cell1.isEquivalent(cell2));
-			}
-			else {
-				NodeVariable tempCell1 = cell1;
-				NodeVariable tempCell2 = null;
-				// For X direction
-				if (x > 0) {
-					for (int i = 0; i < x - 1; i++) {
-						tempCell2 = NodeVariable.of();
-						literals.add(toLeftView.call(tempCell1, tempCell2));
-						tempCell1 = tempCell2;
-					}
-					tempCell2 = (y == 0) ? cell2 : NodeVariable.of();
-					literals.add(toLeftView.call(tempCell1, tempCell2));
-				} else if (x < 0) {
-					for (int i = 0; i < -x - 1; i++) {
-						tempCell2 = NodeVariable.of();
-						literals.add(toRightView.call(tempCell1, tempCell2));
-						tempCell1 = tempCell2;
-					}
-					tempCell2 = (y == 0) ? cell2 : NodeVariable.of();
-					literals.add(toRightView.call(tempCell1, tempCell2));
-				}
+			builder.clause(
+				cellView.call(cell1, cell1Vector),
+				cellView.call(cell2, cell2Vector),
+				placedOnCells.call(car1, cell1, car2, cell2),
+				check(
+					and(
+						greaterEq(distTerm, RealTerms.constant((double)dist)),
+						less(distTerm, RealTerms.constant((double)(dist + 1)))
+					)
+				)
+			);
+		});
+	}
 
-				if(x != 0){
-					tempCell1 = tempCell2;
-				}
-				// For Y direction
-				if (y > 0) {
-					for (int i = 0; i < y - 1; i++) {
-						tempCell2 = NodeVariable.of();
-						literals.add(behindView.call(tempCell1, tempCell2));
-						tempCell1 = tempCell2;
-					}
-					literals.add(behindView.call(tempCell1, cell2));
-				} else if (y < 0) {
-					for (int i = 0; i < -y - 1; i++) {
-						tempCell2 = NodeVariable.of();
-						literals.add(inFrontView.call(tempCell1, tempCell2));
-						tempCell1 = tempCell2;
-					}
-					literals.add(inFrontView.call(tempCell1, cell2));
-				}
-			}
-			builder.clause(literals);
+	public RelationalQuery isDistanceGreater(NodeVariable car1, NodeVariable car2, double dist) {
+		return Query.of(builder -> {
+			var cell1 = NodeVariable.of();
+			var cell2 = NodeVariable.of();
+			builder.parameters(car1, car2);
+			DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
+			DataVariable<Vector> cell2Vector = Variable.of(Vector.class);
+			var distTerm = distance(cell1Vector, cell2Vector);
+
+			builder.clause(
+					cellView.call(cell1, cell1Vector),
+					cellView.call(cell2, cell2Vector),
+					placedOnCells.call(car1, cell1, car2, cell2),
+					check(greater(RealTerms.constant(dist), distTerm))
+			);
+		});
+	}
+
+	public RelationalQuery onOwnLane(NodeVariable car) {
+		return Query.of(builder -> {
+			builder.parameters(car);
+			var lane = NodeVariable.of();
+			builder.clause(intendedLaneView.call(car, lane),
+					onLane.call(car, lane));
+		});
+	}
+	public RelationalQuery onIntermediateLane(NodeVariable car) {
+		return Query.of(builder -> {
+			builder.parameters(car);
+			var lane = NodeVariable.of();
+			builder.clause(	intermediateLaneView.call(lane),
+					onLane.call(car, lane));
+		});
+	}
+
+	public RelationalQuery onOppositeLane(NodeVariable car) {
+		return Query.of(builder -> {
+			builder.parameters(car);
+			var lane = NodeVariable.of();
+			builder.clause(reverseIntent.call(car),
+							forwardLaneView.call(lane),
+							onLane.call(car, lane))
+					.clause(
+							forwardIntent.call(car),
+							reverseLaneView.call(lane),
+							onLane.call(car, lane)
+					);
+		});
+	}
+
+	public RelationalQuery otherCarOnLane(NodeVariable car1, NodeVariable car2) {
+		return Query.of(builder -> {
+			builder.parameters(car1, car2);
+			var lane = NodeVariable.of();
+			builder.clause(onLane.call(car1, lane),
+					onLane.call(car2, lane),
+					car1.notEquivalent(car2));
+		});
+	}
+
+	public RelationalQuery isInFront(NodeVariable car1, NodeVariable car2) {
+		return Query.of(builder -> {
+			builder.parameters(car1, car2);
+			var cell1 = NodeVariable.of();
+			var cell2 = NodeVariable.of();
+			DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
+			DataVariable<Vector> cell2Vector = Variable.of(Vector.class);
+			var cell1Y = VectorTerms.y(cell1Vector);
+			var cell2Y = VectorTerms.y(cell2Vector);
+			builder.clause(
+						placedOnCells.call(car1, cell1, car2, cell2),
+						cellView.call(cell1, cell1Vector),
+						cellView.call(cell2, cell2Vector),
+						forwardIntent.call(car2),
+						check(IntTerms.greater(cell1Y, cell2Y))
+					)
+					.clause(
+						placedOnCells.call(car1, cell1, car2, cell2),
+						cellView.call(cell1, cell1Vector),
+						cellView.call(cell2, cell2Vector),
+						reverseIntent.call(car2),
+						check(IntTerms.greater(cell2Y, cell1Y)));
+		});
+	}
+
+	public RelationalQuery isToLeft(NodeVariable car1, NodeVariable car2) {
+		return Query.of(builder -> {
+			builder.parameters(car1, car2);
+			var cell1 = NodeVariable.of();
+			var cell2 = NodeVariable.of();
+			DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
+			DataVariable<Vector> cell2Vector = Variable.of(Vector.class);
+			var cell1X = VectorTerms.x(cell1Vector);
+			var cell2X = VectorTerms.x(cell2Vector);
+			builder.clause(
+							placedOnCells.call(car1, cell1, car2, cell2),
+							cellView.call(cell1, cell1Vector),
+							cellView.call(cell2, cell2Vector),
+							forwardIntent.call(car2),
+							check(IntTerms.greater(cell2X, cell1X))
+					)
+					.clause(
+							placedOnCells.call(car1, cell1, car2, cell2),
+							cellView.call(cell1, cell1Vector),
+							cellView.call(cell2, cell2Vector),
+							reverseIntent.call(car2),
+							check(IntTerms.greater(cell1X, cell2X)));
+		});
+	}
+
+	public RelationalQuery isInLine(NodeVariable car1, NodeVariable car2) {
+		return Query.of(builder -> {
+			builder.parameters(car1, car2);
+			var cell1 = NodeVariable.of();
+			var cell2 = NodeVariable.of();
+			DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
+			DataVariable<Vector> cell2Vector = Variable.of(Vector.class);
+			var inLineTerm = VectorTerms.isInLineByX(cell1Vector, cell2Vector);
+			builder.clause(
+					placedOnCells.call(car1, cell1, car2, cell2),
+					cellView.call(cell1, cell1Vector),
+					cellView.call(cell2, cell2Vector),
+					check(inLineTerm));
 		});
 	}
 

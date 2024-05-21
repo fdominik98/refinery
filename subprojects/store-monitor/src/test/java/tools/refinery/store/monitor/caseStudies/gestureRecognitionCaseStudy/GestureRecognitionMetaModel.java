@@ -7,6 +7,7 @@ import tools.refinery.store.monitor.actionLiterals.IncreaseVectorActionLiteral;
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.caseStudies.MetaModelInstance;
 import tools.refinery.store.monitor.caseStudies.ModelInitializer;
+import tools.refinery.store.monitor.utils.Vector;
 import tools.refinery.store.monitor.utils.VectorYTerm;
 import tools.refinery.logic.dnf.Query;
 import tools.refinery.logic.dnf.RelationalQuery;
@@ -38,24 +39,6 @@ public class GestureRecognitionMetaModel extends MetaModelInstance {
 	@Override
 	public String getCaseStudyId() {
 		return "REC";
-	}
-
-	public static class Vector {
-		Vector(int x, int y){
-			this.x = x;
-			this.y = y;
-		}
-
-		@Override
-		public String toString() {
-			return "(" + x + ", " + y + ")";
-		}
-
-		public int x;
-		public int y;
-		public static Vector of(int x, int y) {
-			return new Vector(x, y);
-		}
 	}
 
 	public Symbol<Boolean> joinSymbol = Symbol.of("Join", 2);

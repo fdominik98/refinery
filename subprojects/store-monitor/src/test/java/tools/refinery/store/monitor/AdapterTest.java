@@ -39,8 +39,8 @@ class AdapterTest {
 	void TestTimedStateMachine() {
 
 		StateMachine sm = new StateMachine();
-		var s2 = sm.createState();
-		var s3 = sm.createState();
+		var s2 = sm.createState("s2");
+		var s3 = sm.createState("s3");
 
 		var c1 = Variable.of("c1");
 		var c2 = Variable.of("c2");

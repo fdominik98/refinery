@@ -3,14 +3,15 @@ package tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy;
 import tools.refinery.store.model.Interpretation;
 import tools.refinery.store.model.Model;
 import tools.refinery.store.monitor.caseStudies.ModelInitializer;
+import tools.refinery.store.monitor.utils.Vector;
 import tools.refinery.store.tuple.Tuple;
 public final class GestureRecognitionInitializer1 extends ModelInitializer {
 	public final Interpretation<Boolean> joinInterpretation;
 	public final Interpretation<Boolean> bodyInterpretation;
-	public final Interpretation<GestureRecognitionMetaModel.Vector> headInterpretation;
-	public final Interpretation<GestureRecognitionMetaModel.Vector> handInterpretation;
-	public final Interpretation<GestureRecognitionMetaModel.Vector> shoulderInterpretation;
-	public final Interpretation<GestureRecognitionMetaModel.Vector> elbowInterpretation;
+	public final Interpretation<Vector> headInterpretation;
+	public final Interpretation<Vector> handInterpretation;
+	public final Interpretation<Vector> shoulderInterpretation;
+	public final Interpretation<Vector> elbowInterpretation;
 
 	public final Tuple body;
 	public final Tuple rightHand;
@@ -41,20 +42,20 @@ public final class GestureRecognitionInitializer1 extends ModelInitializer {
 		leftShoulder = modificationAdapter.createObject();
 
 		bodyInterpretation.put(body, true);
-		headInterpretation.put(head, GestureRecognitionMetaModel.Vector.of(5, 10));
+		headInterpretation.put(head, Vector.of(5, 10));
 		joinInterpretation.put(Tuple.of(head.get(0), body.get(0)), true);
 
-		shoulderInterpretation.put(rightShoulder, GestureRecognitionMetaModel.Vector.of(5, 8));
-		elbowInterpretation.put(rightElbow,	GestureRecognitionMetaModel.Vector.of(5, 8));
-		handInterpretation.put(rightHand, GestureRecognitionMetaModel.Vector.of(5,	8));
+		shoulderInterpretation.put(rightShoulder, Vector.of(5, 8));
+		elbowInterpretation.put(rightElbow,	Vector.of(5, 8));
+		handInterpretation.put(rightHand, Vector.of(5,	8));
 
 		joinInterpretation.put(Tuple.of(rightShoulder.get(0), body.get(0)), true);
 		joinInterpretation.put(Tuple.of(rightElbow.get(0), rightShoulder.get(0)), true);
 		joinInterpretation.put(Tuple.of(rightHand.get(0), rightElbow.get(0)), true);
 
-		shoulderInterpretation.put(leftShoulder, GestureRecognitionMetaModel.Vector.of(-5, 8));
-		elbowInterpretation.put(leftElbow, GestureRecognitionMetaModel.Vector.of(-5, 8));
-		handInterpretation.put(leftHand, GestureRecognitionMetaModel.Vector.of(-5,8));
+		shoulderInterpretation.put(leftShoulder, Vector.of(-5, 8));
+		elbowInterpretation.put(leftElbow, Vector.of(-5, 8));
+		handInterpretation.put(leftHand, Vector.of(-5,8));
 
 		joinInterpretation.put(Tuple.of(leftShoulder.get(0), body.get(0)), true);
 		joinInterpretation.put(Tuple.of(leftElbow.get(0), leftShoulder.get(0)), true);

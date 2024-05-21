@@ -17,11 +17,11 @@ public class TrafficSituationAutomaton extends AutomatonInstance {
 
 	public TrafficSituationAutomaton(TrafficSituationMetaModel metaModel) {
 		super(0);
-		s2 = stateMachine.createState(1);
-		s3 = stateMachine.createState(2);
-		s4 = stateMachine.createState(3);
-		accept = stateMachine.createState(State.Type.ACCEPT, 10);
-		trap = stateMachine.createState(State.Type.TRAP);
+		s2 = stateMachine.createState(1, "s2");
+		s3 = stateMachine.createState(2, "s3");
+		s4 = stateMachine.createState(3, "s4");
+		accept = stateMachine.createState(State.Type.ACCEPT, 10, "Accept");
+		trap = stateMachine.createState(State.Type.TRAP, "Trap");
 
 		a1 =  NodeVariable.of("a1");
 		a2 =  NodeVariable.of("a2");

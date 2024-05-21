@@ -14,12 +14,12 @@ public class State {
 	public final List<Transition> transitionsOut = new ArrayList<>();
 	public final List<Transition> transitionsIn = new ArrayList<>();
 
-	public final int id;
+	public final String name;
 	public final double weight;
 	public final Type type;
 
-	public State(int id, Type type, double weight) {
-		this.id = id;
+	public State(String name, Type type, double weight) {
+		this.name = name;
 		this.type = type;
 		this.weight = weight;
 	}
@@ -34,7 +34,7 @@ public class State {
 
 	@Override
 	public String toString() {
-		return "state" + id;
+		return "MonitorState: " + name;
 	}
 
 
@@ -56,5 +56,19 @@ public class State {
 		if(!transitionsIn.contains(t)) {
 			transitionsIn.add(t);
 		}
+	}
+
+	// Override equals and hashCode to compare State objects by their name
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null || getClass() != obj.getClass()) return false;
+		State state = (State) obj;
+		return name.equals(state.name);
+	}
+
+	@Override
+	public int hashCode() {
+		return name.hashCode() + type.hashCode() + (int)weight;
 	}
 }

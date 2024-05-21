@@ -1,0 +1,4 @@
+Median all version number: 38
+Median trajectory length: 30.0
+Median timespan: 5332
+Median diversity: 0.2802954271928071

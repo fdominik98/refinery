@@ -6,7 +6,6 @@ import tools.refinery.store.monitor.internal.guards.Guard;
 import java.util.*;
 
 public class StateMachine {
-	private int stateId = 1;
 	public final Set<Transition> transitions = new HashSet<>();
 	public final Set<State> states = new HashSet<>();;
 	public final State startState;
@@ -14,23 +13,28 @@ public class StateMachine {
 	private double maxWeight = 0;
 
 	public StateMachine(double startWeight) {
-		this.startState = this.createState(startWeight);
+		this.startState = this.createState(startWeight, "StartState");
 	}
 
 	public StateMachine() {
-		this.startState = this.createState();
+		this.startState = this.createState("StartState");
 	}
 
-	public State createState() {
-		return createState(State.Type.INTERMEDIATE, 0);
+	public State createState(String name) {
+		return createState(State.Type.INTERMEDIATE, 0, name);
 	}
 
-	public State createState(double weight) {return createState(State.Type.INTERMEDIATE, weight);}
+	public State createState(double weight, String name) {return createState(State.Type.INTERMEDIATE, weight, name);}
 
-	public State createState(State.Type type) {return createState(type, 0);}
+	public State createState(State.Type type, String name) {return createState(type, 0, name);}
 
-	public State createState(State.Type type, double weight) {
-		State s = new State(this.stateId++, type, weight);
+	public State createState(State.Type type, double weight, String name) {
+		for (State state : states) {
+			if (state.name.equals(name)) {
+				throw new IllegalArgumentException("Two states have the same name which is illegal.");
+			}
+		}
+		State s = new State(name, type, weight);
 		this.states.add(s);
 		if(maxWeight < s.weight) {
 			maxWeight = s.weight;

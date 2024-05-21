@@ -20,10 +20,10 @@ public class SenderReceiverAutomaton extends AutomatonInstance {
 	public SenderReceiverAutomaton(SenderReceiverMetaModel metaModel) {
 		super(0);
 
-		sent = stateMachine.createState(3);
-		timeout = stateMachine.createState(State.Type.ACCEPT, 5);
-		close = stateMachine.createState( 1);
-		done = stateMachine.createState(State.Type.TRAP, 0);
+		sent = stateMachine.createState(3, "Sent");
+		timeout = stateMachine.createState(State.Type.ACCEPT, 5, "Timeout");
+		close = stateMachine.createState( 1, "Close");
+		done = stateMachine.createState(State.Type.TRAP, 0, "Done");
 
 		Clock clock1 = new Clock("clock1");
 		var message = Variable.of("message");

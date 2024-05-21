@@ -1,6 +1,5 @@
 package tools.refinery.store.monitor.utils;
 
-import tools.refinery.store.monitor.caseStudies.gestureRecognitionCaseStudy.GestureRecognitionMetaModel.Vector;
 import tools.refinery.logic.substitution.Substitution;
 import tools.refinery.logic.term.Term;
 import tools.refinery.logic.term.UnaryTerm;

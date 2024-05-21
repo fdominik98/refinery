@@ -19,11 +19,11 @@ public class GestureRecognitionAutomaton extends AutomatonInstance {
 	public GestureRecognitionAutomaton(GestureRecognitionMetaModel metaModel) {
 		super(4);
 
-		movedUp = stateMachine.createState(3);
-		movedDown = stateMachine.createState( 0);
-		success = stateMachine.createState(State.Type.ACCEPT, 10);
-		above = stateMachine.createState( 6);
-		trap = stateMachine.createState(State.Type.TRAP);
+		movedUp = stateMachine.createState(3, "MovedUp");
+		movedDown = stateMachine.createState( 0, "MovedDown");
+		success = stateMachine.createState(State.Type.ACCEPT, 10, "Success");
+		above = stateMachine.createState( 6, "Above");
+		trap = stateMachine.createState(State.Type.TRAP, "Trap");
 
 		hand =  NodeVariable.of("hand");
 

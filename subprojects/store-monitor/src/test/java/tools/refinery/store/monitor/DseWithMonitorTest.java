@@ -36,7 +36,7 @@ class DseWithMonitorTest {
 	@Test
 		//@Disabled("This test is only for debugging purposes")
 	void TrafficSituationTestForDemo() {
-		int[] solutions = {1};
+		int[] solutions = {5};
 		var metaModel = new TrafficSituationDemoMetaModel();
 		runTrajectoryGenerations(metaModel, true,
 				"trafficDemoTestOutput", solutions,
