@@ -59,6 +59,7 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 	public FunctionView<Integer> carView = new FunctionView<>(carSymbol);
 	public Symbol<Boolean> egoSymbol = Symbol.of("Ego", 1);
 	public KeyOnlyView<Boolean> egoView = new KeyOnlyView<>(egoSymbol);
+	public Symbol<Boolean> neighboringLanesSymbol = Symbol.of("NeighboringLanes", 2);
 	public Symbol<Boolean> forwardLaneSymbol = Symbol.of("ForwardLane", 1);
 	public Symbol<Boolean> reverseLaneSymbol = Symbol.of("ReverseLane", 1);
 	public Symbol<Boolean> intermediateLaneSymbol = Symbol.of("IntermediateLane", 1);
@@ -69,7 +70,7 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 	public Symbol<Boolean> containingLaneSymbol = Symbol.of("ContainingLane", 2);
 	public KeyOnlyView<Boolean> intendedLaneView = new KeyOnlyView<>(intendedLaneSymbol);
 	public KeyOnlyView<Boolean> containingLaneView = new KeyOnlyView<>(containingLaneSymbol);
-
+	public KeyOnlyView<Boolean> neighboringLanesView = new KeyOnlyView<>(neighboringLanesSymbol);
 
 	public TrafficSituationDemoMetaModel(){
 		super();
@@ -83,7 +84,39 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 		addSymbol(intermediateLaneSymbol);
 		addSymbol(intendedLaneSymbol);
 		addSymbol(containingLaneSymbol);
+		addSymbol(neighboringLanesSymbol);
 
+		RelationalQuery noLanePassingQuery = Query.of("noLanePassingQuery",
+				(builder, car, cell2) ->{
+					var lane = NodeVariable.of();
+					builder.clause(
+							egoView.call(car),
+							containingLaneView.call(cell2, lane)
+					).clause(
+							egoView.call(CallPolarity.NEGATIVE, car),
+							intendedLaneView.call(car, lane),
+							containingLaneView.call(cell2, lane)
+					);
+				}
+		);
+
+		RelationalQuery cellsNextToEachOther =Query.of("neighborhoodPrecondition",
+				(builder, cell1, cell2) ->{
+					DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
+					DataVariable<Vector> cell2Vector = Variable.of(Vector.class);
+
+					builder.clause(
+						cellView.call(cell1, cell1Vector),
+						cellView.call(cell2, cell2Vector),
+						check(VectorTerms.isInLineByX(cell1Vector, cell2Vector))
+					)
+					.clause(
+						cellView.call(cell1, cell1Vector),
+						cellView.call(cell2, cell2Vector),
+						check(greater(VectorTerms.distance(cell1Vector, cell2Vector), constant(1.0)))
+					);
+				}
+		);
 
 		RelationalQuery neighborhoodPrecondition = Query.of("neighborhoodPrecondition",
 				(builder, car, cell1, cell2) ->{
@@ -154,6 +187,7 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 				callLiterals.add(carView.call(variable.car, idVar));
 				callLiterals.add(check(IntTerms.eq(idVar, IntTerms.constant(i))));
 				callLiterals.add(neighborhoodPrecondition.call(variable.car, variable.cell1, variable.cell2));
+				callLiterals.add(noLanePassingQuery.call(variable.car, variable.cell2));
 
 				actionLiterals.add(remove(onCellSymbol, variable.car, variable.cell1));
 				actionLiterals.add(add(onCellSymbol, variable.car, variable.cell2));
@@ -171,6 +205,7 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 					callLiterals.add(swappingCells.call(CallPolarity.NEGATIVE,
 							variables.get(i).car, aCell1, aCell2,
 							variables.get(j).car, bCell1, bCell2));
+					//callLiterals.add(cellsNextToEachOther.call(aCell2, bCell2));
 				}
 			}
 			actionLiterals.add(new IncreaseIntegerActionLiteral(clockSymbol, List.of(), 1));
@@ -217,9 +252,10 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 			builder.parameters(ego, car);
 			builder.clause(
 				egoView.call(ego),
-				isInFront(car, ego).call(car, ego),
+				isInFront.call(car, ego),
 				onOwnLane(ego).call(ego),
 				onOwnLane(car).call(car),
+				isDistanceLess(ego, car, 3).call(ego, car),
 				isInLine(ego, car).call(ego, car));
 		});
 	}
@@ -229,7 +265,47 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 			builder.parameters(car1, car2);
 			builder.clause(
 				otherCarOnLane(car1, car2).call(car1, car2),
-				isInFront(car2, car1).call(car2, car1));
+				isInFront.call(car2, car1));
+		});
+	}
+
+	public RelationalQuery switchingToOppositeLaneWithTraffic(NodeVariable car1, NodeVariable car2) {
+		return Query.of(builder -> {
+			builder.parameters(car1, car2);
+			var lane1 = NodeVariable.of();
+			var lane2 = NodeVariable.of();
+			builder.clause(	intermediateLaneView.call(lane1),
+							onLane.call(car1, lane1),
+							neighboringLanesView.call(lane1, lane2),
+							isOppositeLane.call(car1, lane2),
+							onLane.call(car2, lane2)
+					);
+		});
+	}
+
+	public RelationalQuery switchingToSameDirectionLane(NodeVariable car1) {
+		return Query.of(builder -> {
+			builder.parameters(car1);
+			var lane1 = NodeVariable.of();
+			var lane2 = NodeVariable.of();
+			builder.clause(	intermediateLaneView.call(lane1),
+					onLane.call(car1, lane1),
+					neighboringLanesView.call(lane1, lane2),
+					isSameDirectionLane.call(car1, lane2)
+			);
+		});
+	}
+
+	public RelationalQuery switchingToOwnLane(NodeVariable car1, NodeVariable car2, NodeVariable car3) {
+		return Query.of(builder -> {
+			builder.parameters(car1);
+			var lane1 = NodeVariable.of();
+			var lane2 = NodeVariable.of();
+			builder.clause(	intermediateLaneView.call(lane1),
+					onLane.call(car1, lane1),
+					neighboringLanesView.call(lane1, lane2),
+					intendedLaneView.call(car1, lane2)
+			);
 		});
 	}
 
@@ -238,7 +314,7 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 			builder.parameters(ego, car1, car2);
 			builder.clause(
 					isDistanceGreater(ego, car2, 2.0).call(ego, car2),
-					isInFront(ego, car1).call(ego, car1));
+					isInFront.call(ego, car1));
 		});
 	}
 
@@ -278,7 +354,25 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 					cellView.call(cell1, cell1Vector),
 					cellView.call(cell2, cell2Vector),
 					placedOnCells.call(car1, cell1, car2, cell2),
-					check(greater(RealTerms.constant(dist), distTerm))
+					check(greater(distTerm, RealTerms.constant(dist)))
+			);
+		});
+	}
+
+	public RelationalQuery isDistanceLess(NodeVariable car1, NodeVariable car2, double dist) {
+		return Query.of(builder -> {
+			var cell1 = NodeVariable.of();
+			var cell2 = NodeVariable.of();
+			builder.parameters(car1, car2);
+			DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
+			DataVariable<Vector> cell2Vector = Variable.of(Vector.class);
+			var distTerm = distance(cell1Vector, cell2Vector);
+
+			builder.clause(
+					cellView.call(cell1, cell1Vector),
+					cellView.call(cell2, cell2Vector),
+					placedOnCells.call(car1, cell1, car2, cell2),
+					check(less(distTerm, RealTerms.constant(dist)))
 			);
 		});
 	}
@@ -304,16 +398,41 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 		return Query.of(builder -> {
 			builder.parameters(car);
 			var lane = NodeVariable.of();
-			builder.clause(reverseIntent.call(car),
-							forwardLaneView.call(lane),
-							onLane.call(car, lane))
-					.clause(
-							forwardIntent.call(car),
-							reverseLaneView.call(lane),
-							onLane.call(car, lane)
-					);
+			builder.clause(onLane.call(car, lane),
+				isOppositeLane.call(car, lane));
 		});
 	}
+
+	public RelationalQuery onSameDirectionLane(NodeVariable car) {
+		return Query.of(builder -> {
+			builder.parameters(car);
+			var lane = NodeVariable.of();
+			builder.clause(onLane.call(car, lane),
+					isSameDirectionLane.call(car, lane));
+		});
+	}
+
+	public RelationalQuery isOppositeLane = Query.of((builder, car, lane) -> {
+			builder.clause(reverseIntent.call(car),
+							forwardLaneView.call(lane)
+					)
+					.clause(
+							forwardIntent.call(car),
+							reverseLaneView.call(lane)
+					);
+	});
+
+	private final RelationalQuery isSameDirectionLane = Query.of((builder, car, lane) -> {
+		builder.clause(
+						reverseIntent.call(car),
+						reverseLaneView.call(lane)
+				)
+				.clause(
+						forwardIntent.call(car),
+						forwardLaneView.call(lane)
+				);}
+	);
+
 
 	public RelationalQuery otherCarOnLane(NodeVariable car1, NodeVariable car2) {
 		return Query.of(builder -> {
@@ -325,9 +444,7 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 		});
 	}
 
-	public RelationalQuery isInFront(NodeVariable car1, NodeVariable car2) {
-		return Query.of(builder -> {
-			builder.parameters(car1, car2);
+	public RelationalQuery isInFront = Query.of((builder,car1, car2)  -> {
 			var cell1 = NodeVariable.of();
 			var cell2 = NodeVariable.of();
 			DataVariable<Vector> cell1Vector = Variable.of(Vector.class);
@@ -348,7 +465,6 @@ public final class TrafficSituationDemoMetaModel extends MetaModelInstance {
 						reverseIntent.call(car2),
 						check(IntTerms.greater(cell2Y, cell1Y)));
 		});
-	}
 
 	public RelationalQuery isToLeft(NodeVariable car1, NodeVariable car2) {
 		return Query.of(builder -> {

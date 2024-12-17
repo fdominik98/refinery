@@ -11,6 +11,7 @@ public class Monitor {
 	public final List<Symbol<ClockHolder>> symbolList = new ArrayList<>();
 	public final Symbol<Double> fitnessSymbol = Symbol.of("Fitness", 0, Double.class);
 	public final Symbol<Boolean> inAcceptSymbol = Symbol.of("InAccept", 0);
+	public final Symbol<Boolean> isInvalidSymbol = Symbol.of("IsInvalid", 0);
 	public final List<RelationalQuery> queryList = new ArrayList<>();
 
 	public Monitor(StateMachine stateMachine, ClockHolder clockHolder){

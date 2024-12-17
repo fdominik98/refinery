@@ -3,6 +3,7 @@ package tools.refinery.store.monitor.caseStudies.trafficSituationDemoCaseStudy;
 import tools.refinery.store.monitor.caseStudies.AutomatonInstance;
 import tools.refinery.store.monitor.internal.actions.ClockResetAction;
 import tools.refinery.store.monitor.internal.guards.ClockGreaterThanTimeConstraint;
+import tools.refinery.store.monitor.internal.guards.ClockLessOrEqThanTimeConstraint;
 import tools.refinery.store.monitor.internal.guards.Guard;
 import tools.refinery.store.monitor.internal.model.Clock;
 import tools.refinery.store.monitor.internal.model.State;
@@ -27,13 +28,13 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 		super(0);
 		EgoIsBehindCar = stateMachine.createState(1, "EgoIsBehindCar");
 		EgoIsSwitchingToOppositeLane = stateMachine.createState(2, "EgoIsSwitchingToOppositeLane");
-		EgoIsAtOppositeLane = stateMachine.createState(3, "EgoIsAtOppositeLane");
-		ApproachingCarIsComing = stateMachine.createState(4, "ApproachingCarIsComing");
-		EgoIsInFrontOfCar = stateMachine.createState(5, "EgoIsInFrontOfCar");
-		ApproachingCarIsClose = stateMachine.createState(6, "ApproachingCarIsClose");
-		EgoIsSwitchingToOwnLane = stateMachine.createState(7, "EgoIsSwitchingToOwnLane");
+		EgoIsAtOppositeLane = stateMachine.createState( 4, "EgoIsAtOppositeLane");
+		ApproachingCarIsComing = stateMachine.createState( 8, "ApproachingCarIsComing");
+		EgoIsInFrontOfCar = stateMachine.createState(16, "EgoIsInFrontOfCar");
+		ApproachingCarIsClose = stateMachine.createState(32, "ApproachingCarIsClose");
+		EgoIsSwitchingToOwnLane = stateMachine.createState(64, "EgoIsSwitchingToOwnLane");
 
-		AcceptState = stateMachine.createState(State.Type.ACCEPT, 10, "AcceptState");
+		AcceptState = stateMachine.createState(State.Type.ACCEPT, 128, "AcceptState");
 		TrapState = stateMachine.createState(State.Type.TRAP, "TrapState");
 
 
@@ -59,6 +60,19 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 				new ClockResetAction(behindCarClock)
 		);
 
+
+		// EgoIsSwitchingToOppositeLane
+		stateMachine.createTransition(EgoIsBehindCar,
+				Guard.of(metaModel.switchingToOppositeLaneWithTraffic(ego, c2)),
+				EgoIsSwitchingToOppositeLane
+		);
+
+		stateMachine.createTransition(EgoIsAtOppositeLane,
+				Guard.of(metaModel.switchingToSameDirectionLane(ego)),
+				EgoIsSwitchingToOppositeLane
+		);
+
+
 		// EgoIsAtOppositeLane
 		stateMachine.createTransition(EgoIsSwitchingToOppositeLane,
 				Guard.of(metaModel.onOppositeLane(ego)),
@@ -66,43 +80,33 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 				new ClockResetAction(atOppositeLaneClock)
 		);
 
-		// EgoIsSwitchingToOppositeLane
-		stateMachine.createTransition(EgoIsBehindCar,
-				Guard.of(metaModel.onIntermediateLane(ego)),
-				EgoIsSwitchingToOppositeLane
-		);
-
-		stateMachine.createTransition(EgoIsAtOppositeLane,
-				Guard.of(metaModel.onIntermediateLane(ego)),
-				EgoIsSwitchingToOppositeLane
-		);
-
-		// ApproachingCarIsComing
+		/*// ApproachingCarIsComing
 		stateMachine.createTransition(EgoIsAtOppositeLane,
 				Guard.of(metaModel.otherCarAppearedInFront(ego, c2)),
 				ApproachingCarIsComing
-		);
+		);*/
 
 		// EgoIsInFrontOfCar
-		stateMachine.createTransition(ApproachingCarIsComing,
+		stateMachine.createTransition(EgoIsAtOppositeLane,
 				Guard.of(metaModel.egoInFrontOfCar(ego, c1, c2)),
 				EgoIsInFrontOfCar
 		);
 
 		// ApproachingCarIsClose
-		stateMachine.createTransition(ApproachingCarIsComing,
-				Guard.of(metaModel.isDistance(ego, c2, 2)),
+		/*
+		stateMachine.createTransition(EgoIsAtOppositeLane,
+				Guard.of(metaModel.isDistanceLess(ego, c2, 5)),
 				ApproachingCarIsClose
-		);
+		);*/
 
 		stateMachine.createTransition(EgoIsInFrontOfCar,
-				Guard.of(metaModel.isDistance(ego, c2, 2)),
+				Guard.of(metaModel.isDistanceLess(ego, c2, 5)),
 				ApproachingCarIsClose
 		);
 
 		// EgoIsSwitchingToOwnLane
 		stateMachine.createTransition(ApproachingCarIsClose,
-				Guard.of(metaModel.onIntermediateLane(ego)),
+				Guard.of(metaModel.switchingToOwnLane(ego, c1, c2)),
 				EgoIsSwitchingToOwnLane,
 				new ClockResetAction(atOppositeLaneClock)
 		);
@@ -115,21 +119,9 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 		);
 
 		// TrapState
-		stateMachine.createTransition(EgoIsAtOppositeLane,
-				Guard.of(new ClockGreaterThanTimeConstraint(atOppositeLaneClock, 4)),
+		/*stateMachine.createTransition(EgoIsAtOppositeLane,
+				Guard.of(new ClockGreaterThanTimeConstraint(atOppositeLaneClock, 6)),
 				TrapState
-		);
-
-		stateMachine.createTransition(EgoIsSwitchingToOwnLane,
-				Guard.of(metaModel.onOwnLane(ego), new ClockGreaterThanTimeConstraint(atOppositeLaneClock,2)).neg(),
-				TrapState
-		);
-
-		stateMachine.createTransition(AcceptState,
-				Guard.of(new ClockGreaterThanTimeConstraint(acceptClock,2)),
-				TrapState
-		);
-
-
+		);*/
 	}
 }

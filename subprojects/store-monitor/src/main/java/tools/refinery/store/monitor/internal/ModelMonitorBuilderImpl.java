@@ -58,11 +58,17 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 		return this;
 	}
 
+	private boolean isInAccept(Model model) {
+		var inAcceptInterpretation = model.getInterpretation(monitor.inAcceptSymbol);
+		return inAcceptInterpretation.get(Tuple.of());
+	}
+
 	@Override
 	protected void doConfigure(ModelStoreBuilder storeBuilder) {
 		storeBuilder.symbols(monitor.symbolList);
 		storeBuilder.symbol(monitor.fitnessSymbol);
 		storeBuilder.symbol(monitor.inAcceptSymbol);
+		storeBuilder.symbol(monitor.isInvalidSymbol);
 
 		for (Transition t : monitor.stateMachine.transitions) {
 			for(List<NodeVariable> fromParamList : monitor.get(t.from).keySet()){
@@ -113,6 +119,9 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 				Symbol<ClockHolder> toStateSymbol = monitor.get(t.to, toParamList).symbol;
 
 				Consumer<Model> action = (model) -> {
+					if (isInAccept(model)){
+						return;
+					}
 					var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 					var cursor = queryEngine.getResultSet(query).getAll();
 					var fromStateInterpretation = model.getInterpretation(fromStateSymbol);
@@ -156,29 +165,35 @@ public class ModelMonitorBuilderImpl extends AbstractModelAdapterBuilder<ModelMo
 		actionSet.add(flushAction);
 
 		Consumer<Model> afterAction = (model) -> {
-			var queryEngine = model.getAdapter(ModelQueryAdapter.class);
 			double weightSum = 0;
-			boolean inAccept = false;
+			if (isInAccept(model)){
+				var isInvalidInterpretation = model.getInterpretation(monitor.isInvalidSymbol);
+				isInvalidInterpretation.put(Tuple.of(), true);
+			}
+			else {
+				var queryEngine = model.getAdapter(ModelQueryAdapter.class);
+				boolean inAccept = false;
 
-			for(State s : monitor.stateMachine.states) {
-				if (!monitor.isReachable(s)) {
-					continue;
-				}
-				for(var entry : monitor.get(s).entrySet()) {
-					var resultSet = queryEngine.getResultSet(entry.getValue().query);
-					if (resultSet.size() > 0) {
-						weightSum += resultSet.size() * s.weight;
-						if(s.isAccept()) {
-							inAccept = true;
+				for(State s : monitor.stateMachine.states) {
+					if (!monitor.isReachable(s)) {
+						continue;
+					}
+					for(var entry : monitor.get(s).entrySet()) {
+						var resultSet = queryEngine.getResultSet(entry.getValue().query);
+						if (resultSet.size() > 0) {
+							weightSum += resultSet.size() * s.weight;
+							if(s.isAccept()) {
+								inAccept = true;
+							}
 						}
 					}
 				}
+				var inAcceptInterpretation = model.getInterpretation(monitor.inAcceptSymbol);
+				inAcceptInterpretation.put(Tuple.of(), inAccept);
 			}
+
 			var fitnessInterpretation = model.getInterpretation(monitor.fitnessSymbol);
 			fitnessInterpretation.put(Tuple.of(), 1 / (weightSum + 1));
-
-			var inAcceptInterpretation = model.getInterpretation(monitor.inAcceptSymbol);
-			inAcceptInterpretation.put(Tuple.of(), inAccept);
 		};
 		actionSet.add(afterAction);
 		actionSet.add(flushAction);

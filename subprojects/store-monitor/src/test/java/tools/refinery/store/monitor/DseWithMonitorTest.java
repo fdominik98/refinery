@@ -27,6 +27,8 @@ import tools.refinery.visualization.ModelVisualizerAdapter;
 import tools.refinery.visualization.internal.FileFormat;
 import tools.refinery.evaluation.ModelEvaluationAdapter;
 
+import java.util.Random;
+
 class DseWithMonitorTest {
 	int[] solutions = {10};
 	boolean viz = false;
@@ -36,7 +38,7 @@ class DseWithMonitorTest {
 	@Test
 		//@Disabled("This test is only for debugging purposes")
 	void TrafficSituationTestForDemo() {
-		int[] solutions = {5};
+		int[] solutions = {2};
 		var metaModel = new TrafficSituationDemoMetaModel();
 		runTrajectoryGenerations(metaModel, true,
 				"trafficDemoTestOutput", solutions,
@@ -143,7 +145,9 @@ class DseWithMonitorTest {
 
 		var bestFirst = new BestFirstStoreManager(store, solutionNumber);
 		System.gc();
-		bestFirst.startExploration(initialVersion);
+		long seed = System.currentTimeMillis();
+		System.out.println("Random seed: " + seed);
+		bestFirst.startExploration(initialVersion, seed);
 
 		if (visualization) {
 			model.getAdapter(ModelVisualizerAdapter.class).visualize(bestFirst.getVisualizationStore());

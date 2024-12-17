@@ -22,10 +22,12 @@ public class MonitorFitnessAcceptCriterion implements Criterion{
 	@Override
 	public CriterionCalculator createCalculator(Model model) {
 		var inAcceptInterpretation = model.getInterpretation(monitor.inAcceptSymbol);
+		var isInvalidInterpretation = model.getInterpretation(monitor.isInvalidSymbol);
 		return () -> {
 			Boolean inAccept = inAcceptInterpretation.get(Tuple.of());
-			boolean valuesExist = inAccept != null;
-			return valuesExist && inAccept;
+			Boolean isInvalid = isInvalidInterpretation.get(Tuple.of());
+			boolean valuesExist = inAccept != null && isInvalid != null;
+			return valuesExist && inAccept && !isInvalid;
 		};
 	}
 }
