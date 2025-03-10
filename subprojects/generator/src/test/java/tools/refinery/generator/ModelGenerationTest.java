@@ -25,7 +25,7 @@ class ModelGenerationTest {
 	@Test
 	void modelGenerationTest() throws IOException{
 		String inputPath = "C:\\Users\\freyd\\Desktop\\MSC_3\\Dipterv\\refinery\\subprojects\\generator\\src\\test" +
-				"\\resources\\ASVScenario.problem";
+				"\\resources\\ASVScenarioV2.problem";
 
 		var problem = loader.loadFile(inputPath);
 		generatorFactory.partialInterpretationBasedNeighborhoods(true);
@@ -33,8 +33,8 @@ class ModelGenerationTest {
 		generatorFactory.keepShadowPredicates(true);
 
 		var generator = generatorFactory.createGenerator(problem);
-		generator.setRandomSeed(1);
-		generator.setMaxNumberOfSolutions(5000);
+		generator.setRandomSeed(10);
+		generator.setMaxNumberOfSolutions(100);
 		generator.generate();
 
 		int solutionCount = generator.getSolutionCount();
