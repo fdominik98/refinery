@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @InjectWithRefinery
 class ModelGenerationTest {
@@ -33,9 +34,9 @@ class ModelGenerationTest {
 		generatorFactory.keepShadowPredicates(true);
 
 		var generator = generatorFactory.createGenerator(problem);
-		generator.setRandomSeed(10);
-		generator.setMaxNumberOfSolutions(100);
-		generator.generate();
+		generator.setRandomSeed(1);
+		generator.setMaxNumberOfSolutions(1000000);
+		generator.generateWithSoftTimeout(100, TimeUnit.SECONDS);
 
 		int solutionCount = generator.getSolutionCount();
 		for (int i = 0; i < solutionCount; i++) {

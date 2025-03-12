@@ -99,6 +99,34 @@ public class ModelGeneratorImpl extends ConcreteModelFacade implements ModelGene
 	}
 
 	@Override
+	public GeneratorResult tryGenerateWithSoftTimeout(long l, TimeUnit timeUnit) {
+		try (var executorService = Executors.newSingleThreadScheduledExecutor()) {
+			var timeoutFuture = executorService.schedule(cancellationToken::cancel, l, timeUnit);
+			if (cancellationToken.isCancelled()) {
+				throw new IllegalStateException("Model generation was previously cancelled");
+			}
+			solutionStore = null;
+			randomSeed++;
+			var bestFirst = new BestFirstStoreManager(getModelStore(), maxNumberOfSolutions);
+			try {
+				bestFirst.startExploration(initialVersion, randomSeed);
+				solutionStore = bestFirst.getSolutionStore();
+				return GeneratorResult.SUCCESS;
+			} catch (GeneratorTimeoutException e) {
+				solutionStore = bestFirst.getSolutionStore();
+				return GeneratorResult.SUCCESS;
+			} catch (PropagationRejectedException e){
+				// Fatal propagation error.
+				throw getDiagnostics().wrapPropagationRejectedException(e, getProblemTrace());
+			}
+			finally {
+				timeoutFuture.cancel(true);
+				cancellationToken.reset();
+			}
+		}
+	}
+
+	@Override
 	public GeneratorResult tryGenerateWithTimeout(long l, TimeUnit timeUnit) {
 		try (var executorService = Executors.newSingleThreadScheduledExecutor()) {
 			var timeoutFuture = executorService.schedule(cancellationToken::cancel, l, timeUnit);

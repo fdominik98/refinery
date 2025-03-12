@@ -32,6 +32,12 @@ public interface ModelGenerator extends ModelFacade {
 
 	GeneratorResult tryGenerateWithTimeout(long l, TimeUnit timeUnit);
 
+	GeneratorResult tryGenerateWithSoftTimeout(long l, TimeUnit timeUnit);
+
+	default void generateWithSoftTimeout(long l, TimeUnit timeUnit) {
+		tryGenerateWithSoftTimeout(l, timeUnit).orThrow();
+	}
+
 	default void generateWithTimeout(long l, TimeUnit timeUnit) {
 		tryGenerateWithTimeout(l, timeUnit).orThrow();
 	}
