@@ -25,8 +25,11 @@ class ModelGenerationTest {
 
 	@Test
 	void modelGenerationTest() throws IOException{
-		String inputPath = "C:\\Users\\freyd\\Desktop\\MSC_3\\Dipterv\\refinery\\subprojects\\generator\\src\\test" +
-				"\\resources\\ASVScenarioV2.problem";
+		//String inputPath = "C:\\Users\\freyd\\Desktop\\MSC_3\\Dipterv\\refinery\\subprojects\\generator\\src\\test" +
+		//		"\\resources\\ASVScenario.problem";
+
+		String inputPath = "C:\\Users\\domfr93\\Desktop\\refinery\\subprojects\\generator\\src\\test\\resources" +
+				"\\ASVScenario.problem";
 
 		var problem = loader.loadFile(inputPath);
 		generatorFactory.partialInterpretationBasedNeighborhoods(true);
