@@ -13,7 +13,7 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 	public final State EgoIsBehindCar;
 	public final State EgoIsSwitchingToOppositeLane;
 	public final State EgoIsAtOppositeLane;
-	public final State ApproachingCarIsComing;
+	//public final State ApproachingCarIsComing;
 	public final State EgoIsInFrontOfCar;
 	public final State ApproachingCarIsClose;
 	public final State EgoIsSwitchingToOwnLane;
@@ -29,7 +29,7 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 		EgoIsBehindCar = stateMachine.createState(1, "EgoIsBehindCar");
 		EgoIsSwitchingToOppositeLane = stateMachine.createState(2, "EgoIsSwitchingToOppositeLane");
 		EgoIsAtOppositeLane = stateMachine.createState( 4, "EgoIsAtOppositeLane");
-		ApproachingCarIsComing = stateMachine.createState( 8, "ApproachingCarIsComing");
+		//ApproachingCarIsComing = stateMachine.createState( 8, "ApproachingCarIsComing");
 		EgoIsInFrontOfCar = stateMachine.createState(16, "EgoIsInFrontOfCar");
 		ApproachingCarIsClose = stateMachine.createState(32, "ApproachingCarIsClose");
 		EgoIsSwitchingToOwnLane = stateMachine.createState(64, "EgoIsSwitchingToOwnLane");
@@ -80,11 +80,11 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 				new ClockResetAction(atOppositeLaneClock)
 		);
 
-		/*// ApproachingCarIsComing
-		stateMachine.createTransition(EgoIsAtOppositeLane,
-				Guard.of(metaModel.otherCarAppearedInFront(ego, c2)),
-				ApproachingCarIsComing
-		);*/
+		// ApproachingCarIsComing
+		//stateMachine.createTransition(EgoIsAtOppositeLane,
+		//		Guard.of(metaModel.otherCarAppearedInFront(ego, c2)),
+		//		ApproachingCarIsComing
+		//);
 
 		// EgoIsInFrontOfCar
 		stateMachine.createTransition(EgoIsAtOppositeLane,
@@ -93,11 +93,11 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 		);
 
 		// ApproachingCarIsClose
-		/*
+
 		stateMachine.createTransition(EgoIsAtOppositeLane,
 				Guard.of(metaModel.isDistanceLess(ego, c2, 5)),
 				ApproachingCarIsClose
-		);*/
+		);
 
 		stateMachine.createTransition(EgoIsInFrontOfCar,
 				Guard.of(metaModel.isDistanceLess(ego, c2, 5)),
@@ -119,9 +119,9 @@ public class TrafficSituationDemoAutomaton extends AutomatonInstance {
 		);
 
 		// TrapState
-		/*stateMachine.createTransition(EgoIsAtOppositeLane,
+		stateMachine.createTransition(EgoIsAtOppositeLane,
 				Guard.of(new ClockGreaterThanTimeConstraint(atOppositeLaneClock, 6)),
 				TrapState
-		);*/
+		);
 	}
 }
