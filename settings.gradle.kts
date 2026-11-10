@@ -50,6 +50,13 @@ for (project in rootProject.children) {
 	project.projectDir = file("subprojects/$projectName")
 }
 
+// The SceneGEMS model generation interface lives outside `subprojects` to keep it apart from the upstream modules.
+include("scenegems")
+project(":scenegems").apply {
+	name = "${rootProject.name}-scenegems"
+	projectDir = file("scenegems")
+}
+
 dependencyResolutionManagement {
 	versionCatalogs {
 		create("pluginLibs") {

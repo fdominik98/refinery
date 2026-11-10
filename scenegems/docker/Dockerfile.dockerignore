@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2026 The Refinery Authors <https://refinery.tools/>
+#
+# SPDX-License-Identifier: EPL-2.0
+
+# The build context is the whole Refinery repository; leave out what the Java build regenerates or never reads.
+.git
+.github
+.gradle
+**/.gradle
+.idea
+.vscode
+.yarn
+**/node_modules
+**/build
+**/bin
+**/emf-gen
+**/xtext-gen
+**/xtend-gen
+**/.frontend-gradle-plugin
+**/.node
+**/.playwright
+docker/context/extracted
+docker/cli_dist
+docker/web_dist

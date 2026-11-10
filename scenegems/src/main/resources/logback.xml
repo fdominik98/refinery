@@ -1,0 +1,13 @@
+<!--
+    SPDX-FileCopyrightText: 2026 The Refinery Authors <https://refinery.tools/>
+
+    SPDX-License-Identifier: EPL-2.0
+-->
+<!--
+    Logs go to the standard error (see logback-refinery.xml), so the standard output holds only the status lines of
+    the SceneGEMS per-job protocol.
+-->
+<configuration>
+    <variable name="REFINERY_DEFAULT_LOG_LEVEL" value="WARN"/>
+    <include resource="logback-refinery.xml"/>
+</configuration>
